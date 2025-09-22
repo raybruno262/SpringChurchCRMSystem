@@ -1,21 +1,21 @@
 package com.SpringChurchCRMSystem.SpringChurchCRMSystem.model;
 
-import java.util.Date;
-
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "users")
 public class User {
     @Id
     private String userId;
-    private String firstName;
-    private String lastName;
+    private String names;
     private String email;
     private String password;
     private String phone;
-    private Date dateofBirth;// NID
-    private String role;
+    private Long nationalId;
+    private RoleType role;
+    @DBRef
+    private Level level;
 
     public User() {
     }
@@ -24,16 +24,16 @@ public class User {
         this.userId = userId;
     }
 
-    public User(String userId, String firstName, String lastName, String email, String password, String phone,
-            Date dateofBirth, String role) {
+    public User(String userId, String names, String email, String password, String phone, Long nationalId,
+            RoleType role, Level level) {
         this.userId = userId;
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.names = names;
         this.email = email;
         this.password = password;
         this.phone = phone;
-        this.dateofBirth = dateofBirth;
+        this.nationalId = nationalId;
         this.role = role;
+        this.level = level;
     }
 
     public String getUserId() {
@@ -44,20 +44,12 @@ public class User {
         this.userId = userId;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getNames() {
+        return names;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setNames(String names) {
+        this.names = names;
     }
 
     public String getEmail() {
@@ -84,20 +76,28 @@ public class User {
         this.phone = phone;
     }
 
-    public Date getDateofBirth() {
-        return dateofBirth;
+    public Long getNationalId() {
+        return nationalId;
     }
 
-    public void setDateofBirth(Date dateofBirth) {
-        this.dateofBirth = dateofBirth;
+    public void setNationalId(Long nationalId) {
+        this.nationalId = nationalId;
     }
 
-    public String getRole() {
+    public RoleType getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(RoleType role) {
         this.role = role;
+    }
+
+    public Level getLevel() {
+        return level;
+    }
+
+    public void setLevel(Level level) {
+        this.level = level;
     }
 
 }

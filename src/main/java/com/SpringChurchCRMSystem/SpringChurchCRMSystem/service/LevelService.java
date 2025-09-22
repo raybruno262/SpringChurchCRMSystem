@@ -10,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import com.SpringChurchCRMSystem.SpringChurchCRMSystem.dto.LevelDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.LevelType;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.LevelRepository;
@@ -135,21 +134,26 @@ public class LevelService {
     }
 
     // Find Descendants void method
-    private void findDescendants(String parentId, List<Level> allLevels, List<LevelDTO> result) {
+    private void findDescendants(String parentId, List<Level> allLevels, List<Level> result) {
         for (Level level : allLevels) {
             if (level.getParent() != null && level.getParent().getLevelId().equals(parentId)) {
-                result.add(new LevelDTO(level));
-                findDescendants(parentId, allLevels, result);
+                result.add(level);
+                findDescendants(level.getLevelId(), allLevels, result);
             }
         }
     }
 
     // Find all Descendants now
-    public List<LevelDTO> getAllDescendants(String parentId) {
+    public List<Level> getAllDescendants(String parentId) {
         List<Level> allLevels = levelRepository.findAll();
-        List<LevelDTO> descendants = new ArrayList<>();
+        List<Level> descendants = new ArrayList<>();
         findDescendants(parentId, allLevels, descendants);
         return descendants;
+    }
+
+    // find level by Id
+    public Optional<Level> getLevelById(String levelId) {
+        return levelRepository.findById(levelId);
     }
 
 }

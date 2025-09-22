@@ -1,17 +1,22 @@
 package com.SpringChurchCRMSystem.SpringChurchCRMSystem.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.service.LevelService;
-import com.SpringChurchCRMSystem.SpringChurchCRMSystem.dto.LevelDTO;
+
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 
 @RestController
@@ -64,8 +69,14 @@ public class LevelController {
 
     // get all Descendants of a level
     @GetMapping("/allDescendants")
-    public List<LevelDTO> allDescendants(@RequestParam String parentId) {
+    public List<Level> allDescendants(@RequestParam String parentId) {
         return levelService.getAllDescendants(parentId);
+    }
+
+    // get level by ID
+    @GetMapping("/getLevelById")
+    public Optional<Level> getLevelById(@RequestParam String levelId) {
+        return levelService.getLevelById(levelId);
     }
 
 }

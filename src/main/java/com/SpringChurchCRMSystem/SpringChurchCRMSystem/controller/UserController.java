@@ -56,7 +56,11 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    // @GetMapping("/paginatedUsers")
-    // public Page<User> getPaginatedUsers(@RequestParam )
+    @GetMapping("/paginatedUsers")
+    public Page<User> getPaginatedUsers(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return userService.getPaginatedUsers(page, size);
+
+    }
 
 }
