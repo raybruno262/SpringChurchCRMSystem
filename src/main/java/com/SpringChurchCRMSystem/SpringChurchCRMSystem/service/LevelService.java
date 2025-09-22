@@ -1,10 +1,16 @@
 package com.SpringChurchCRMSystem.SpringChurchCRMSystem.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.dto.LevelDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.LevelType;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.LevelRepository;
@@ -89,9 +95,12 @@ public class LevelService {
             case PARISH:
                 levelType = LevelType.CHAPEL;
                 break;
+            case CHAPEL:
+                levelType = LevelType.CELL;
+                break;
 
             default:
-                return "Level type not found";
+                return "Parent Level type not found";
 
         }
 
@@ -104,6 +113,43 @@ public class LevelService {
 
         return "Level saved Successfully";
 
+    }
+
+    // Getting all levels
+    public List<Level> findAll() {
+        return levelRepository.findAll();
+    }
+
+    // Getting all paginated levels
+    public Page<Level> getPaginatedLevels(int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        return levelRepository.findAll(pageable);
+    }
+
+    // Get only children of a level
+    public List<Level> getChildren(String parentId) {
+        return levelRepository.findAll().stream()
+                .filter(level -> level.getParent() != null && level.getParent().getLevelId().equals(parentId))
+                .collect(Collectors.toList());
+
+    }
+
+    // Find Descendants void method
+    private void findDescendants(String parentId, List<Level> allLevels, List<LevelDTO> result) {
+        for (Level level : allLevels) {
+            if (level.getParent() != null && level.getParent().getLevelId().equals(parentId)) {
+                result.add(new LevelDTO(level));
+                findDescendants(parentId, allLevels, result);
+            }
+        }
+    }
+
+    // Find all Descendants now
+    public List<LevelDTO> getAllDescendants(String parentId) {
+        List<Level> allLevels = levelRepository.findAll();
+        List<LevelDTO> descendants = new ArrayList<>();
+        findDescendants(parentId, allLevels, descendants);
+        return descendants;
     }
 
 }
