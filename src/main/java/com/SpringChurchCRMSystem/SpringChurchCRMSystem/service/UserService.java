@@ -62,7 +62,7 @@ public class UserService {
             return " Email not found.";
         }
 
-        String verifyCode = generateLoginCode();
+        String verifyCode = generateResetCode();
         otpCache.put(email + "reset", verifyCode);
 
         try {
