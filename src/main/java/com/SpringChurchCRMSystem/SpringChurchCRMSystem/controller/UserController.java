@@ -63,4 +63,21 @@ public class UserController {
 
     }
 
+    @PostMapping("/sendLoginOtp")
+    public String sendLogintOtp(@RequestParam String email) {
+        return userService.sendLoginOtp(email);
+    }
+
+    @PostMapping("/login")
+    public User login(@RequestParam String email,
+            @RequestParam String verifyCode, @RequestParam String Password) {
+
+        return userService.verifyLoginCodeAndLogin(email, verifyCode, Password);
+    }
+
+    @PostMapping("/destroySession")
+    public String destroySession() {
+        return userService.destroySession();
+    }
+
 }
