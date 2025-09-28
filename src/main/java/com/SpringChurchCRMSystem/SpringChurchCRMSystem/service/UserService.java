@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -56,10 +58,11 @@ public class UserService {
 
     // Send Reset Password OTP
 
-    public String sendPasswordResetOtp(String email) {
+    public ResponseEntity<String> sendPasswordResetOtp(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if (userOptional.isEmpty()) {
-            return " Email not found.";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status 3000"); // Email not found
+
         }
 
         String verifyCode = generateResetCode();
@@ -110,78 +113,88 @@ public class UserService {
             helper.addInline("churchLogo", imageFile);
 
             emailDispatcher.send(mimeMessage);
-            return "Reset OTP sent successfully to " + email;
+            return ResponseEntity.ok("Status 1000"); // OTP sent successfully
 
         } catch (MessagingException e) {
             e.printStackTrace();
-            return " Failed to send OTP email.";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Status 2000"); // Email sending failed
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Status 9999"); // Unknown error
         }
     }
 
     // verify forgot password otp and reset the password
-    public String verifyResetCodeAndUpdatePassword(String email, String verificationCode, String newPassword) {
+    public ResponseEntity<String> verifyResetCodeAndUpdatePassword(String email, String verificationCode,
+            String newPassword) {
         String cacheKey = email + "reset";
         String storedCode = otpCache.get(cacheKey);
-        if (storedCode == null || !storedCode.equals(verificationCode)) {
-            return "Invalid Otp";
-        }
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) {
-            return "Email not found";
-        } else if (newPassword != null) {
+
+        try {
+            if (storedCode == null || !storedCode.equals(verificationCode)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status 3000"); // Invalid OTP
+            }
+
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status 3000"); // Email not found
+            }
+
+            if (newPassword == null || newPassword.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status 4000"); // Password not provided
+            }
+
             User user = userOptional.get();
             user.setPassword(encoder.encode(newPassword));
             userRepository.save(user);
             otpCache.remove(cacheKey);
 
-            return "Password Changed Successfully";
+            return ResponseEntity.ok("Status 1000"); // Password changed successfully
 
-        } else {
-            return "Password not saved";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Status 9999"); // Unknown error
         }
     }
 
     // send login otp
-    public String sendLoginOtp(String email) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) {
-            return "Email not found.";
-        }
-
-        String verifyCode = generateLoginCode();
-        otpCache.put(email + "login", verifyCode);
-
+    public ResponseEntity<String> sendLoginOtp(String email, String password) {
         try {
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status 3000"); // Email not found
+            }
+
+            User user = userOptional.get();
+            if (!encoder.matches(password, user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Status 4000"); // Incorrect password
+            }
+
+            String verifyCode = generateLoginCode();
+            otpCache.put(email + "login", verifyCode);
+
             MimeMessage mimeMessage = emailDispatcher.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(email);
-            helper.setSubject("🔐 Your ChurchCRM Login Code ");
+            helper.setSubject("🔐 Your ChurchCRM Login Code");
 
             String htmlBody = """
                     <html>
                         <body style="margin:0; padding:0; background-color:#f3f3f3; font-family:'Segoe UI', sans-serif;">
                             <div style="max-width:600px; margin:auto; background-color:#ffffff; border-radius:10px; padding:40px; box-shadow:0 4px 12px rgba(0,0,0,0.1); text-align:center;">
-
-                                <!-- Logo -->
                                 <img src='cid:churchLogo' alt='Church Logo' style='height:80px; margin-bottom:20px;'/>
-
-                                <!-- Greeting -->
-                                <h2 style="color:#4a148c; margin-bottom:10px;">Welcome! </h2>
-                              <p style="color:#555; font-size:16px;">To access your account securely, please use the login code below:</p>
-
-                                <!-- OTP Code -->
+                                <h2 style="color:#4a148c; margin-bottom:10px;">Welcome!</h2>
+                                <p style="color:#555; font-size:16px;">Use the login code below to access your account:</p>
                                 <div style="margin:30px 0;">
                                     <div style="display:inline-block; background-color:#fff3cd; color:#d32f2f; font-size:36px; font-weight:bold; padding:15px 30px; border-radius:8px; border:1px solid #ffeeba;">
                                         %s
                                     </div>
-                                    <p style="color:#777; font-size:14px; margin-top:10px;"> Please do not share it with anyone.</p>
+                                    <p style="color:#777; font-size:14px; margin-top:10px;">Do not share this code.</p>
                                 </div>
-
-                                <!-- Footer -->
                                 <hr style="border:none; border-top:1px solid #eee; margin:30px 0;">
                                 <div style="font-size:13px; color:#999;">
-                                 <p>&copy; 2025 ChurchCRM System </p>
+                                    <p>&copy; 2025 ChurchCRM System</p>
                                 </div>
                             </div>
                         </body>
@@ -190,40 +203,50 @@ public class UserService {
                     .formatted(verifyCode);
 
             helper.setText(htmlBody, true);
-
-            // Embed logo image inline
             File imageFile = new File("src/main/resources/static/church-logo.png");
             helper.addInline("churchLogo", imageFile);
 
             emailDispatcher.send(mimeMessage);
-            return "Login OTP sent successfully to " + email;
+            return ResponseEntity.ok("Status 1000"); // OTP sent successfully
 
         } catch (MessagingException e) {
             e.printStackTrace();
-            return " Failed to send OTP email.";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Status 2000"); // Email sending failed
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Status 9999"); // Unknown error
         }
     }
 
     // verify otp and login
-    public User verifyLoginCodeAndLogin(String email, String verifyCode, String Password) {
+    public ResponseEntity<?> verifyLoginCodeAndLogin(String email, String verifyCode, String password) {
         String cacheKey = email + "login";
         String storedCode = otpCache.get(cacheKey);
-        if (storedCode == null || !storedCode.equals(verifyCode)) {
-            throw new IllegalArgumentException("Invalid Otp");
-        }
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Email not found");
-        }
-        User user = userOptional.get();
-        if (!encoder.matches(Password, user.getPassword())) {
-            throw new IllegalArgumentException("Incorrect Password");
-        }
 
-        otpCache.remove(cacheKey);
-        userSession.setAttribute("loggedInUser", user);
-        return user;
+        try {
+            if (storedCode == null || !storedCode.equals(verifyCode)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status 3000"); // Invalid OTP
+            }
 
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status 3000"); // Email not found
+            }
+
+            User user = userOptional.get();
+
+            if (!encoder.matches(password, user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Status 4000"); // Incorrect password
+            }
+
+            otpCache.remove(cacheKey);
+            userSession.setAttribute("loggedInUser", user);
+            return ResponseEntity.ok(user); // Status 1000 (success)
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Status 9999"); // Unknown error
+        }
     }
 
     // Destroy the session

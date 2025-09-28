@@ -50,7 +50,7 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
 
         // Allows requests from any origin (you can restrict this in production)
-        config.setAllowedOriginPatterns(List.of("*")); // Allow all origins
+        config.setAllowedOriginPatterns(List.of("*")); // allow all origins
 
         // Allows all headers in incoming requests
         config.setAllowedHeaders(List.of("*")); // Allow all headers

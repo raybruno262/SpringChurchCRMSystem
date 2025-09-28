@@ -3,6 +3,7 @@ package com.SpringChurchCRMSystem.SpringChurchCRMSystem.controller;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,12 +32,12 @@ public class UserController {
     }
 
     @PostMapping("/sendPasswordResetOtp")
-    public String sendPasswordResetOtp(@RequestParam String email) {
+    public ResponseEntity<String> sendPasswordResetOtp(@RequestParam String email) {
         return userService.sendPasswordResetOtp(email);
     }
 
     @PostMapping("/resetPassword")
-    public String resetPassword(@RequestParam String email,
+    public ResponseEntity<String> resetPassword(@RequestParam String email,
             @RequestParam String verificationCode, @RequestParam String newPassword) {
         return userService.verifyResetCodeAndUpdatePassword(email, verificationCode, newPassword);
     }
@@ -64,12 +65,12 @@ public class UserController {
     }
 
     @PostMapping("/sendLoginOtp")
-    public String sendLogintOtp(@RequestParam String email) {
-        return userService.sendLoginOtp(email);
+    public ResponseEntity<String> sendLogintOtp(@RequestParam String email, @RequestParam String Password) {
+        return userService.sendLoginOtp(email, Password);
     }
 
     @PostMapping("/login")
-    public User login(@RequestParam String email,
+    public ResponseEntity<?> login(@RequestParam String email,
             @RequestParam String verifyCode, @RequestParam String Password) {
 
         return userService.verifyLoginCodeAndLogin(email, verifyCode, Password);
