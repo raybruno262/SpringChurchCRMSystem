@@ -27,7 +27,8 @@ public class Member {
     @JsonFormat(pattern = "MM/dd/yyyy")
     private LocalDate membershipDate;
 
-    private String baptismStatus; // baptized, not baptized
+    private BaptismInformation baptismInformation; // Baptism Object
+    private byte[] profilePic;
 
     @DBRef
     private Department department;
@@ -43,7 +44,7 @@ public class Member {
 
     public Member(String memberId, String names, LocalDate dateOfBirth, String phone, String gender,
             String maritalStatus, String email, String status, String address, LocalDate membershipDate,
-            String baptismStatus, Department department, Level level) {
+            BaptismInformation baptismInformation, byte[] profilePic, Department department, Level level) {
         this.memberId = memberId;
         this.names = names;
         this.dateOfBirth = dateOfBirth;
@@ -54,7 +55,8 @@ public class Member {
         this.status = status;
         this.address = address;
         this.membershipDate = membershipDate;
-        this.baptismStatus = baptismStatus;
+        this.baptismInformation = baptismInformation;
+        this.profilePic = profilePic;
         this.department = department;
         this.level = level;
     }
@@ -139,12 +141,20 @@ public class Member {
         this.membershipDate = membershipDate;
     }
 
-    public String getBaptismStatus() {
-        return baptismStatus;
+    public BaptismInformation getBaptismInformation() {
+        return baptismInformation;
     }
 
-    public void setBaptismStatus(String baptismStatus) {
-        this.baptismStatus = baptismStatus;
+    public void setBaptismInformation(BaptismInformation baptismInformation) {
+        this.baptismInformation = baptismInformation;
+    }
+
+    public byte[] getProfilePic() {
+        return profilePic;
+    }
+
+    public void setProfilePic(byte[] profilePic) {
+        this.profilePic = profilePic;
     }
 
     public Department getDepartment() {

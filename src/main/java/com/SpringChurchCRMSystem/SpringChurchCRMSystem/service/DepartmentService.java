@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Department;
@@ -17,37 +18,37 @@ public class DepartmentService {
     private DepartmentRepository departmentRepository;
 
     // create new department
-    public String createDepartment(Department department) {
+    public ResponseEntity<String> createDepartment(Department department) {
         if (departmentRepository.findByName(department.getName()).isPresent()) {
-            return "Department already exists";
+            return ResponseEntity.ok("Status 5000"); // department exists
         } else {
             departmentRepository.save(department);
-            return "Department Saved Successfully";
+            return ResponseEntity.ok("Status 1000"); // Success
         }
     }
 
     // update department
-    public String updateDapartment(String departmentId, Department newDepartment) {
+    public ResponseEntity<String> updateDapartment(String departmentId, Department newDepartment) {
         Optional<Department> optdep = departmentRepository.findById(departmentId);
         if (optdep.isEmpty()) {
-            return "Department not found";
+            return ResponseEntity.ok("Status 3000");
         }
         Department dep = optdep.get();
         dep.setDepartmentId(departmentId);
         dep.setName(newDepartment.getName());
         departmentRepository.save(dep);
-        return "Department updated successfully";
+        return ResponseEntity.ok("Status 1000"); // Success
 
     }
 
     // delete department
-    public String deleteDepartment(String departmentId) {
+    public ResponseEntity<String> deleteDepartment(String departmentId) {
         Optional<Department> optdep = departmentRepository.findById(departmentId);
         if (optdep.isEmpty()) {
-            return "Department not found";
+            return ResponseEntity.ok("Status 3000");
         }
         departmentRepository.deleteById(departmentId);
-        return "Department Deleted Successfully";
+        return ResponseEntity.ok("Status 1000");
 
     }
 

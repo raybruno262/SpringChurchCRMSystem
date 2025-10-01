@@ -2,17 +2,37 @@ package com.SpringChurchCRMSystem.SpringChurchCRMSystem;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
+import org.springframework.core.convert.converter.Converter;
 
 // Marks this class as a configuration class for Spring
 @Configuration
 public class SecurityConfig {
+
+    // Registers custom converter to store LocalDate as UTC midnight
+    @Bean
+    public MongoCustomConversions mongoCustomConversions() {
+        return new MongoCustomConversions(List.of(new LocalDateToDateConverter()));
+    }
+
+    @WritingConverter
+    static class LocalDateToDateConverter implements Converter<LocalDate, Date> {
+        @Override
+        public Date convert(LocalDate source) {
+            return Date.from(source.atStartOfDay(ZoneOffset.UTC).toInstant());
+        }
+    }
 
     // Defines the main security filter chain bean
     @Bean
@@ -81,6 +101,7 @@ public class SecurityConfig {
 
         // Allows all HTTP methods
         config.setAllowedMethods(List.of("*"));
+        config.setExposedHeaders(List.of("*")); // Expose all response headers
 
         // Applies this configuration to all endpoints
         source.registerCorsConfiguration("/**", config);
