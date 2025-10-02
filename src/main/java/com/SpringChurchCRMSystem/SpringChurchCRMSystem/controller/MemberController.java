@@ -10,7 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Member;
-import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
+
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.service.MemberService;
 
 @RestController
