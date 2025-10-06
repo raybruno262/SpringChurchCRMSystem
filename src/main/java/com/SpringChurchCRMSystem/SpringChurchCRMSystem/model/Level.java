@@ -13,7 +13,7 @@ public class Level {
     private LevelType levelType;
     @DBRef
     private Level parent;
-    private boolean isActive = true;
+    private Boolean isActive;
 
     public Level() {
     }
@@ -22,7 +22,7 @@ public class Level {
         this.levelId = levelId;
     }
 
-    public Level(String levelId, String name, String address, LevelType levelType, Level parent, boolean isActive) {
+    public Level(String levelId, String name, String address, LevelType levelType, Level parent, Boolean isActive) {
         this.levelId = levelId;
         this.name = name;
         this.address = address;
@@ -71,11 +71,11 @@ public class Level {
         this.parent = parent;
     }
 
-    public boolean isActive() {
+    public Boolean getIsActive() {
         return isActive;
     }
 
-    public void setActive(boolean isActive) {
+    public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
     }
 

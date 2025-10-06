@@ -27,33 +27,43 @@ public class DepartmentController {
     // save department
     @PostMapping("/createDepartment")
     public ResponseEntity<String> createDepartment(@RequestBody Department department) {
+
         return departmentService.createDepartment(department);
+
     }
 
     // update department
     @PutMapping("/updateDepartment/{departmentId}")
     public ResponseEntity<String> updateDepartment(@PathVariable String departmentId,
             @RequestBody Department newDepartment) {
+
         return departmentService.updateDapartment(departmentId, newDepartment);
+
     }
 
     // delete department
     @DeleteMapping("/deleteDepartment/{departmentId}")
     public ResponseEntity<String> deleteDepartment(@PathVariable String departmentId) {
+
         return departmentService.deleteDepartment(departmentId);
+
     }
 
     // get all departments
     @GetMapping("/allDepartments")
     public List<Department> allDepartments() {
+
         return departmentService.getAllDepartments();
+
     }
 
     // get paginated departments
     @GetMapping("/getPaginatedDepartments")
     public Page<Department> getPaginatedDepartments(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return departmentService.getPaginatedDepartments(page, size);
+
     }
 
 }

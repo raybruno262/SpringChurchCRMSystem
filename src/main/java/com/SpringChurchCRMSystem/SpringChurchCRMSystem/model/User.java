@@ -15,7 +15,7 @@ public class User {
     private Long nationalId;
     private RoleType role;
     private byte[] profilePic;
-    private boolean isActive = true;
+    private Boolean isActive;
     @DBRef
     private Level level;
 
@@ -27,7 +27,7 @@ public class User {
     }
 
     public User(String userId, String names, String email, String password, String phone, Long nationalId,
-            RoleType role, byte[] profilePic, boolean isActive, Level level) {
+            RoleType role, byte[] profilePic, Boolean isActive, Level level) {
         this.userId = userId;
         this.names = names;
         this.email = email;
@@ -104,11 +104,11 @@ public class User {
         this.profilePic = profilePic;
     }
 
-    public boolean isActive() {
+    public Boolean getIsActive() {
         return isActive;
     }
 
-    public void setActive(boolean isActive) {
+    public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
     }
 

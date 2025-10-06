@@ -50,11 +50,6 @@ public class MemberService {
                 return ResponseEntity.ok("Status 6000");
             }
 
-            // Email already exists
-            if (memberRepository.existsByEmail(member.getEmail())) {
-                return ResponseEntity.ok("Status 5000");
-            }
-
             // Department must exist
             if (member.getDepartment() == null || member.getDepartment().getDepartmentId() == null ||
                     !departmentRepository.existsByDepartmentId(member.getDepartment().getDepartmentId())) {
@@ -64,8 +59,10 @@ public class MemberService {
             // Baptism information
             BaptismInformation baptismInformation = member.getBaptismInformation();
             if (baptismInformation != null) {
-                if (baptismInformation.isBaptized()) {
-                    if (baptismInformation.isSameReligion()) {
+
+                if (Boolean.TRUE.equals(baptismInformation.getBaptized())) {
+
+                    if (Boolean.TRUE.equals(baptismInformation.getSameReligion())) {
                         // Must have a valid BaptismCell
                         if (baptismInformation.getBaptismCell() == null ||
                                 baptismInformation.getBaptismCell().getLevelId() == null ||
@@ -85,7 +82,7 @@ public class MemberService {
                     }
                 } else {
                     // When not Baptized
-                    if (baptismInformation != null && !baptismInformation.isBaptized()) {
+                    if (baptismInformation != null && Boolean.FALSE.equals(baptismInformation.getBaptized())) {
                         baptismInformation.setSameReligion(false);
                         baptismInformation.setBaptismCell(null);
                         baptismInformation.setOtherChurchName(null);
@@ -162,9 +159,7 @@ public class MemberService {
             if (updatedData.getMaritalStatus() != null)
                 member.setMaritalStatus(updatedData.getMaritalStatus());
             if (updatedData.getEmail() != null && !updatedData.getEmail().equals(member.getEmail())) {
-                if (memberRepository.existsByEmail(updatedData.getEmail())) {
-                    return ResponseEntity.ok("Status 5000"); // Email already exists
-                }
+
                 member.setEmail(updatedData.getEmail());
             }
             if (updatedData.getStatus() != null)
@@ -210,40 +205,39 @@ public class MemberService {
             existing = new BaptismInformation();
         }
 
-        // Update baptized flag
-        existing.setBaptized(incoming.isBaptized());
+        if (Boolean.TRUE.equals(incoming.getBaptized())) {
+            existing.setBaptized(incoming.getBaptized());
 
-        // Update sameReligion flag
-        existing.setSameReligion(incoming.isSameReligion());
-
-        if (incoming.isBaptized()) {
-            if (incoming.isSameReligion()) {
-                // Validate and update baptismCell
+            if (Boolean.TRUE.equals(incoming.getSameReligion())) {
+                existing.setSameReligion(incoming.getSameReligion());
+                // Must have a valid BaptismCell
                 if (incoming.getBaptismCell() != null &&
                         incoming.getBaptismCell().getLevelId() != null &&
                         levelRepository.existsById(incoming.getBaptismCell().getLevelId())) {
                     existing.setBaptismCell(incoming.getBaptismCell());
                 }
-                // Clear otherChurch fields
                 existing.setOtherChurchName(null);
                 existing.setOtherChurchAddress(null);
-            } else {
-                // Update otherChurch fields if provided
-                if (incoming.getOtherChurchName() != null) {
+
+            } else if (Boolean.FALSE.equals(incoming.getSameReligion())) {
+                existing.setSameReligion(incoming.getSameReligion());
+
+                // Name and Address of other Church
+                if (incoming.getOtherChurchName() != null ||
+                        incoming.getOtherChurchAddress() != null) {
                     existing.setOtherChurchName(incoming.getOtherChurchName());
-                }
-                if (incoming.getOtherChurchAddress() != null) {
                     existing.setOtherChurchAddress(incoming.getOtherChurchAddress());
                 }
-                // Clear baptismCell
+
                 existing.setBaptismCell(null);
             }
-        } else {
-            // Not baptized — clear all conditional fields
+        } else if (incoming != null && Boolean.FALSE.equals(incoming.getBaptized())) {
+            // When not Baptized
+
             existing.setSameReligion(false);
             existing.setBaptismCell(null);
             existing.setOtherChurchName(null);
-            existing.setOtherChurchAddress(null);
+            existing.setOtherChurchName(null);
         }
 
         member.setBaptismInformation(existing);
@@ -289,13 +283,13 @@ public class MemberService {
 
         // SuperAdmin sees all birthdays
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
-            Page<Member> allMembers = memberRepository.findAll(pageable);
+            Page<Member> allMembers = memberRepository.findByStatus("Active", PageRequest.of(page, size));
+
             List<Member> filtered = allMembers.getContent().stream().filter(member -> member.getDateOfBirth() != null &&
                     member.getDateOfBirth().getMonthValue() == currentMonth).toList();
             return new PageImpl<>(filtered, pageable, filtered.size());
 
         }
-        // scoped levels
 
         // Scoped Active levels for CellAdmin
         List<Level> scopedLevels = levelService.getAllActiveCellsUnder(loggedInUser.getLevel());

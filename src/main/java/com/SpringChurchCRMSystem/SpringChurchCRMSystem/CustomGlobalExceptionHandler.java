@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 
 @RestControllerAdvice
 public class CustomGlobalExceptionHandler {
-    // Blocked by inactive ancestor for enabling a level frorm inactive to active
+    // Blocked by inactive ancestor for enabling a level from inactive to active
     public static final String BLOCKED_BY_INACTIVE_ANCESTOR = "Status 8000";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

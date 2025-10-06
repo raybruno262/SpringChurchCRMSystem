@@ -13,13 +13,19 @@ import org.springframework.stereotype.Service;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.CustomGlobalExceptionHandler;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.LevelType;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.RoleType;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.LevelRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Service
 public class LevelService {
 
     @Autowired
     private LevelRepository levelRepository;
+    @Autowired
+    private HttpSession userSession;
 
     // Creating all levels at once
     public ResponseEntity<String> createAllLevels(String headquarterName, String headquarterAddress,
@@ -28,6 +34,18 @@ public class LevelService {
             String chapelName, String chapelAddress,
             String cellName, String cellAddress) {
         try {
+            User loggedInUser = (User) userSession.getAttribute("loggedInUser");
+
+            // No user logged in
+            if (loggedInUser == null) {
+                return ResponseEntity.ok("Status 4000");
+            }
+
+            // Not a SuperAdmin
+            if (loggedInUser.getRole() != RoleType.SuperAdmin) {
+                return ResponseEntity.ok("Status 6000");
+            }
+
             // HEADQUARTER (always required)
             Optional<Level> existingHeadquarter = levelRepository.findByNameAndLevelType(headquarterName,
                     LevelType.HEADQUARTER);
@@ -36,6 +54,7 @@ public class LevelService {
                 hq.setName(headquarterName);
                 hq.setAddress(headquarterAddress);
                 hq.setLevelType(LevelType.HEADQUARTER);
+                hq.setIsActive(true);
                 return levelRepository.save(hq);
             });
 
@@ -47,6 +66,7 @@ public class LevelService {
                 region.setName(regionName);
                 region.setAddress(regionAddress);
                 region.setLevelType(LevelType.REGION);
+                region.setIsActive(true);
                 region.setParent(currentParent);
                 region = levelRepository.save(region);
                 currentParent = region;
@@ -58,6 +78,7 @@ public class LevelService {
                 parish.setName(parishName);
                 parish.setAddress(parishAddress);
                 parish.setLevelType(LevelType.PARISH);
+                parish.setIsActive(true);
                 parish.setParent(currentParent);
                 parish = levelRepository.save(parish);
                 currentParent = parish;
@@ -69,6 +90,7 @@ public class LevelService {
                 chapel.setName(chapelName);
                 chapel.setAddress(chapelAddress);
                 chapel.setLevelType(LevelType.CHAPEL);
+                chapel.setIsActive(true);
                 chapel.setParent(currentParent);
                 chapel = levelRepository.save(chapel);
                 currentParent = chapel;
@@ -80,6 +102,7 @@ public class LevelService {
                 cell.setName(cellName);
                 cell.setAddress(cellAddress);
                 cell.setLevelType(LevelType.CELL);
+                cell.setIsActive(true);
                 cell.setParent(currentParent);
                 levelRepository.save(cell);
             }
@@ -95,6 +118,17 @@ public class LevelService {
     // create a single level from an existing parent
     public ResponseEntity<String> addOneLevel(String levelName, String levelAddress, String parentId) {
         try {
+            User loggedInUser = (User) userSession.getAttribute("loggedInUser");
+
+            // No user logged in
+            if (loggedInUser == null) {
+                return ResponseEntity.ok("Status 4000");
+            }
+
+            // Not a SuperAdmin
+            if (loggedInUser.getRole() != RoleType.SuperAdmin) {
+                return ResponseEntity.ok("Status 6000");
+            }
             // Validate input
             if (levelName == null || levelAddress == null) {
                 return ResponseEntity.ok("Status 3000"); // Missing required fields
@@ -122,6 +156,7 @@ public class LevelService {
             newLevel.setName(levelName);
             newLevel.setAddress(levelAddress);
             newLevel.setLevelType(levelType);
+            newLevel.setIsActive(true);
             newLevel.setParent(parent);
             levelRepository.save(newLevel);
 
@@ -226,7 +261,7 @@ public class LevelService {
         List<Level> activeCells = new ArrayList<>();
 
         for (Level child : children) {
-            if (child.getLevelType() == LevelType.CELL && child.isActive()) {
+            if (child.getLevelType() == LevelType.CELL && child.getIsActive()) {
                 activeCells.add(child);
             } else {
                 activeCells.addAll(getAllActiveCellsUnder(child));
@@ -241,7 +276,7 @@ public class LevelService {
         List<Level> inactiveCells = new ArrayList<>();
 
         for (Level child : children) {
-            if (child.getLevelType() == LevelType.CELL && !child.isActive()) {
+            if (child.getLevelType() == LevelType.CELL && !child.getIsActive()) {
                 inactiveCells.add(child);
             } else {
                 inactiveCells.addAll(getAllInactiveCellsUnder(child));
@@ -250,31 +285,99 @@ public class LevelService {
         return inactiveCells;
     }
 
-    // Disable all the active level and its Descendants
-    public ResponseEntity<String> disableLevelAndDescendants(String levelId) {
-        Optional<Level> rootOpt = levelRepository.findById(levelId);
+    // Update level
+    public ResponseEntity<String> updateLevel(String levelId, Level updatedData) {
         try {
-            if (rootOpt.isPresent()) {
-                Level rootLevel = rootOpt.get();
-                rootLevel.setActive(false);
-                levelRepository.save(rootLevel);
+            User loggedInUser = (User) userSession.getAttribute("loggedInUser");
 
-                List<Level> allLevels = levelRepository.findAll();
-                List<Level> descendants = new ArrayList<>();
-                findDescendants(levelId, allLevels, descendants);
+            if (loggedInUser == null)
+                return ResponseEntity.ok("Status 4000");
+            if (loggedInUser.getRole() != RoleType.SuperAdmin)
+                return ResponseEntity.ok("Status 6000");
 
-                for (Level descendant : descendants) {
-                    descendant.setActive(false);
+            Optional<Level> levelOpt = levelRepository.findById(levelId);
+            if (levelOpt.isEmpty())
+                return ResponseEntity.ok("Status 3000");
+
+            Level level = levelOpt.get();
+
+            // 1️⃣ Update name/address
+            if (updatedData.getName() != null && !updatedData.getName().isBlank()) {
+                level.setName(updatedData.getName());
+            }
+            if (updatedData.getAddress() != null && !updatedData.getAddress().isBlank()) {
+                level.setAddress(updatedData.getAddress());
+            }
+            if (updatedData.getLevelType() != null) {
+                return ResponseEntity.ok("Status 3000");
+            }
+
+            // 2️⃣ Reassign parent
+            if (updatedData.getParent() != null && updatedData.getParent().getLevelId() != null) {
+                String newParentId = updatedData.getParent().getLevelId();
+                Optional<Level> newParentOpt = levelRepository.findById(newParentId);
+                if (newParentOpt.isEmpty())
+                    return ResponseEntity.ok("Status 3000");
+
+                Level newParent = newParentOpt.get();
+
+                if (!level.getIsActive() || !newParent.getIsActive()) {
+                    return ResponseEntity.ok(CustomGlobalExceptionHandler.BLOCKED_BY_INACTIVE_ANCESTOR);
                 }
 
+                Level oldParent = level.getParent();
+                if (oldParent != null && oldParent.getLevelType() != newParent.getLevelType()) {
+                    return ResponseEntity.ok("Status 3000");
+                }
+
+                level.setParent(newParent);
+            }
+
+            // Enabling Level
+            if (Boolean.TRUE.equals(updatedData.getIsActive())) {
+
+                if (!hasActiveAncestor(level)) {
+                    return ResponseEntity.ok(CustomGlobalExceptionHandler.BLOCKED_BY_INACTIVE_ANCESTOR);
+                }
+
+                level.setIsActive(true);
+                levelRepository.save(level);
+
+                List<Level> inactiveLevels = levelRepository.findByIsActiveFalse();
+                List<Level> descendants = new ArrayList<>();
+                findDescendants(levelId, inactiveLevels, descendants);
+
+                for (Level descendant : descendants) {
+                    descendant.setIsActive(true);
+                }
                 levelRepository.saveAll(descendants);
 
+                // Disable Level
+            } else if (Boolean.FALSE.equals(updatedData.getIsActive())) {
+
+                level.setIsActive(false);
+                levelRepository.save(level);
+
+                List<Level> activeLevels = levelRepository.findByIsActiveTrue();
+                List<Level> descendants = new ArrayList<>();
+                findDescendants(levelId, activeLevels, descendants);
+
+                for (Level descendant : descendants) {
+                    descendant.setIsActive(false);
+                }
+                levelRepository.saveAll(descendants);
             }
-            return ResponseEntity.ok("Status 1000"); // Success
+
+            // Final save if only name/address/parent changed
+            if (levelRepository.findById(levelId).isPresent()) {
+                levelRepository.save(level);
+            }
+
+            return ResponseEntity.ok("Status 1000");
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.ok("Status 9999"); // Unknown error
+            return ResponseEntity.ok("Status 9999");
         }
     }
 
@@ -292,7 +395,7 @@ public class LevelService {
             }
 
             Level parentLevel = parentOpt.get();
-            if (!parentLevel.isActive()) {
+            if (!parentLevel.getIsActive()) {
                 return false; // Inactive ancestor,block enable
             }
 
@@ -300,112 +403,6 @@ public class LevelService {
         }
 
         return true; // Reached top safely
-    }
-
-    // Enable(Restore) a level
-    public ResponseEntity<String> enableLevelAndDescendants(String levelId) {
-        try {
-            Optional<Level> rootOpt = levelRepository.findById(levelId);
-
-            if (rootOpt.isEmpty()) {
-                return ResponseEntity.ok("Status 3000"); // Level not found
-            }
-
-            Level rootLevel = rootOpt.get();
-
-            // Recursively check ancestor chain
-            if (!hasActiveAncestor(rootLevel)) {
-                // blocked by inactive ancestor
-                return ResponseEntity.ok(CustomGlobalExceptionHandler.BLOCKED_BY_INACTIVE_ANCESTOR);
-
-            }
-
-            // Enable root level
-            rootLevel.setActive(true);
-            levelRepository.save(rootLevel);
-
-            // Enable all descendants
-            List<Level> inactiveLevels = levelRepository.findByIsActiveFalse();
-            List<Level> descendants = new ArrayList<>();
-            findDescendants(levelId, inactiveLevels, descendants);
-
-            for (Level descendant : descendants) {
-                descendant.setActive(true);
-            }
-
-            levelRepository.saveAll(descendants);
-
-            return ResponseEntity.ok("Status 1000"); // Success
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok("Status 9999"); // Unknown error
-        }
-    }
-
-    // Update a single Level's name or Address or both
-    public ResponseEntity<String> updateLevelDetails(String levelId, Level updatedData) {
-        try {
-            Optional<Level> levelOpt = levelRepository.findById(levelId);
-            if (levelOpt.isEmpty()) {
-                return ResponseEntity.ok("Status 3000"); // Level not found
-            }
-
-            Level level = levelOpt.get();
-
-            // Update name if provided
-            if (updatedData.getName() != null && !updatedData.getName().isBlank()) {
-                level.setName(updatedData.getName());
-            }
-
-            // Update address if provided
-            if (updatedData.getAddress() != null && !updatedData.getAddress().isBlank()) {
-                level.setAddress(updatedData.getAddress());
-            }
-
-            levelRepository.save(level);
-            return ResponseEntity.ok("Status 1000"); // Success
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok("Status 9999"); // Unknown error
-        }
-    }
-
-    // Update a parentId where old parent roletype == new parent roletype
-    public ResponseEntity<String> reassignLevelParent(String levelId, String newParentId) {
-        try {
-            Optional<Level> levelOpt = levelRepository.findById(levelId);
-            Optional<Level> newParentOpt = levelRepository.findById(newParentId);
-
-            if (levelOpt.isEmpty() || newParentOpt.isEmpty()) {
-                return ResponseEntity.ok("Status 3000"); // Not found
-            }
-
-            Level level = levelOpt.get();
-            Level newParent = newParentOpt.get();
-
-            // Can not reassign if either is inactive
-            if (!level.isActive() || !newParent.isActive()) {
-
-                return ResponseEntity.ok(CustomGlobalExceptionHandler.BLOCKED_BY_INACTIVE_ANCESTOR);
-            }
-
-            // Check if old parent type matches new parent type
-            Level oldParent = level.getParent();
-            if (oldParent != null && oldParent.getLevelType() != newParent.getLevelType()) {
-                return ResponseEntity.ok("Status 3000"); // RoleTypes must be the same
-            }
-
-            level.setParent(newParent);
-            levelRepository.save(level);
-
-            return ResponseEntity.ok("Status 1000"); // Success
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok("Status 9999"); // Unknown error
-        }
     }
 
 }

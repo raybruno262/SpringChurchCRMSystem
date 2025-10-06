@@ -25,12 +25,16 @@ public class MemberController {
     public ResponseEntity<String> createUser(
             @RequestPart("member") Member member,
             @RequestPart(value = "file", required = false) MultipartFile file) {
+
         return memberService.createMember(member, file);
+
     }
 
     @GetMapping("/allMembers")
     public List<Member> getAllMembers() {
+
         return memberService.getAllMembers();
+
     }
 
     @PutMapping("/updateMember/{memberId}")
@@ -38,27 +42,35 @@ public class MemberController {
             @PathVariable String memberId,
             @RequestPart("member") Member updatedData,
             @RequestPart(value = "file", required = false) MultipartFile file) {
+
         return memberService.updateMember(memberId, updatedData, file);
+
     }
 
     @GetMapping("/paginatedMembers")
     public Page<Member> getPaginatedMembers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return memberService.getPaginatedMembers(page, size);
+
     }
 
     // Scoped paginated members based on hierarchy
     @GetMapping("/scopedPaginatedMembers")
     public Page<Member> getScopedPaginatedMembers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return memberService.getScopedPaginatedMembers(page, size);
+
     }
 
     // Scoped birthday members for current month
     @GetMapping("/scopedBirthdayMembers")
     public Page<Member> getScopedBirthdayMembers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return memberService.getScopedMembersWithBirthdaysThisMonth(page, size);
+
     }
 
 }

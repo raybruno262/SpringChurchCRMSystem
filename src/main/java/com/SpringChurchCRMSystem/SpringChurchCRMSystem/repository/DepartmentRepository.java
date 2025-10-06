@@ -11,10 +11,13 @@ import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Department;
 
 @Repository
 public interface DepartmentRepository extends MongoRepository<Department, String> {
+    // find all departments
     Page<Department> findAll(Pageable pageable);
 
+    // find department by name
     Optional<Department> findByName(String name);
 
+    // check if department exists by id
     boolean existsByDepartmentId(String departmentId);
 
 }

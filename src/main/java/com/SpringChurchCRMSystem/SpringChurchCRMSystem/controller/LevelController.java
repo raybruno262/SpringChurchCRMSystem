@@ -34,6 +34,7 @@ public class LevelController {
             @RequestParam String parishName, @RequestParam String parishAddress,
             @RequestParam String chapelName, @RequestParam String chapelAddress,
             @RequestParam String cellName, @RequestParam String cellAddress) {
+
         return levelService.createAllLevels(headquarterName, headquarterAddress, regionName,
                 regionAddress, parishName, parishAddress, chapelName, chapelAddress,
                 cellName, cellAddress);
@@ -44,32 +45,48 @@ public class LevelController {
     @PostMapping("/addOneLevel")
     public ResponseEntity<String> addOneLevel(@RequestParam String levelName, @RequestParam String levelAddress,
             @RequestParam String parentId) {
+
         return levelService.addOneLevel(levelName, levelAddress, parentId);
+
+    }
+
+    // Update level
+    @PutMapping("/updateLevel/{levelId}")
+    public ResponseEntity<String> updateLevel(@PathVariable String levelId, @RequestBody Level updatedData) {
+
+        return levelService.updateLevel(levelId, updatedData);
 
     }
 
     // getting all levels
     @GetMapping("/getAllLevels")
     public List<Level> getAllLevels() {
+
         return levelService.getAllLevels();
+
     }
 
     // getting all Active levels
     @GetMapping("/getAllActiveLevels")
     public List<Level> getAllActiveLevels() {
+
         return levelService.getAllActiveLevels();
+
     }
 
     // getting all Inactive levels
     @GetMapping("/getAllInactiveLevels")
     public List<Level> getAllInactiveLevels() {
+
         return levelService.getAllInactiveLevels();
+
     }
 
     // get all paginated levels
     @GetMapping("/paginatedLevels")
     public Page<Level> getPaginatedLevels(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return levelService.getPaginatedLevels(page, size);
 
     }
@@ -78,6 +95,7 @@ public class LevelController {
     @GetMapping("/getPaginatedActiveLevels")
     public Page<Level> getPaginatedActiveLevels(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return levelService.getPaginatedActiveLevels(page, size);
 
     }
@@ -86,6 +104,7 @@ public class LevelController {
     @GetMapping("/getPaginatedInactiveLevels")
     public Page<Level> getPaginatedInactiveLevels(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return levelService.getPaginatedInactiveLevels(page, size);
 
     }
@@ -93,49 +112,33 @@ public class LevelController {
     // get all Descendants of a level
     @GetMapping("/getAllDescendants")
     public List<Level> getAllDescendants(@RequestParam String parentId) {
+
         return levelService.getAllDescendants(parentId);
+
     }
 
     // get all Descendants of Active level
     @GetMapping("/getActiveDescendants")
     public List<Level> getActiveDescendants(@RequestParam String parentId) {
+
         return levelService.getActiveDescendants(parentId);
+
     }
 
     // get all Descendants of InActive level
     @GetMapping("/getInactiveDescendants")
     public List<Level> getInactiveDescendants(@RequestParam String parentId) {
+
         return levelService.getInactiveDescendants(parentId);
+
     }
 
     // get level by ID
     @GetMapping("/getLevelById")
     public Optional<Level> getLevelById(@RequestParam String levelId) {
+
         return levelService.getLevelById(levelId);
-    }
 
-    // Disable all the active level and its Descendants
-    @PutMapping("/disableLevelAndDescendants")
-    public ResponseEntity<String> disableLevelAndDescendants(@RequestParam String levelId) {
-        return levelService.disableLevelAndDescendants(levelId);
-    }
-
-    // Enable all the Inactive level and its Descendants
-    @PutMapping("/enableLevelAndDescendants")
-    public ResponseEntity<String> enableLevelAndDescendants(@RequestParam String levelId) {
-        return levelService.enableLevelAndDescendants(levelId);
-    }
-
-    @PutMapping("/updateLevelNameorAddress/{levelId}")
-    public ResponseEntity<String> updateLevelNameorAddress(@PathVariable String levelId,
-            @RequestBody Level updatedData) {
-        return levelService.updateLevelDetails(levelId, updatedData);
-    }
-
-    @PutMapping("/reassignLevelParent")
-    public ResponseEntity<String> updateLevelNameorAddress(@RequestParam String levelId,
-            @RequestParam String newParentId) {
-        return levelService.reassignLevelParent(levelId, newParentId);
     }
 
 }

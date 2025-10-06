@@ -33,7 +33,9 @@ public class UserController {
     public ResponseEntity<String> createUser(
             @RequestPart("user") User user,
             @RequestPart(value = "file", required = false) MultipartFile file) {
+
         return userService.createUser(user, file);
+
     }
 
     // update a user
@@ -42,43 +44,40 @@ public class UserController {
             @PathVariable String userId,
             @RequestPart("user") User updatedData,
             @RequestPart(value = "file", required = false) MultipartFile file) {
+
         return userService.updateUser(userId, updatedData, file);
-    }
 
-    // disabling a user
-    @PutMapping("/disableUser/{userId}")
-    public ResponseEntity<String> disableUser(@PathVariable String userId) {
-        return userService.disableUser(userId);
-    }
-
-    // Enabling a user
-    @PutMapping("/enableUser/{userId}")
-    public ResponseEntity<String> enableUser(@PathVariable String userId) {
-        return userService.enableUser(userId);
     }
 
     // get all users regardless of the status
     @GetMapping("/allUsers")
     public List<User> getAllUsers() {
+
         return userService.getAllUsers();
+
     }
 
     // get all active users
     @GetMapping("/getAllInActiveUsers")
     public List<User> getAllInActiveUsers() {
+
         return userService.getAllInActiveUsers();
+
     }
 
     // get all inactive users
     @GetMapping("/getAllActiveUsers")
     public List<User> getAllActiveUsers() {
+
         return userService.getAllActiveUsers();
+
     }
 
     // get all paginated users
     @GetMapping("/getPaginatedUsers")
     public Page<User> getPaginatedUsers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return userService.getPaginatedUsers(page, size);
 
     }
@@ -87,6 +86,7 @@ public class UserController {
     @GetMapping("/getPaginatedActiveUsers")
     public Page<User> getPaginatedActiveUsers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return userService.getPaginatedActiveUsers(page, size);
 
     }
@@ -95,24 +95,31 @@ public class UserController {
     @GetMapping("/getPaginatedInactiveUsers")
     public Page<User> getPaginatedInactiveUsers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
+
         return userService.getPaginatedInactiveUsers(page, size);
 
     }
 
     @PostMapping("/sendPasswordResetOtp")
     public ResponseEntity<String> sendPasswordResetOtp(@RequestParam String email) {
+
         return userService.sendPasswordResetOtp(email);
+
     }
 
     @PostMapping("/resetPassword")
     public ResponseEntity<String> resetPassword(@RequestParam String email,
             @RequestParam String verificationCode, @RequestParam String newPassword) {
+
         return userService.verifyResetCodeAndUpdatePassword(email, verificationCode, newPassword);
+
     }
 
     @PostMapping("/sendLoginOtp")
     public ResponseEntity<String> sendLogintOtp(@RequestParam String email, @RequestParam String Password) {
+
         return userService.sendLoginOtp(email, Password);
+
     }
 
     @PostMapping("/login")
@@ -120,11 +127,16 @@ public class UserController {
             @RequestParam String verifyCode, @RequestParam String Password) {
 
         return userService.verifyLoginCodeAndLogin(email, verifyCode, Password);
+
     }
 
     @PostMapping("/destroySession")
     public ResponseEntity<String> destroySession() {
-        return userService.Logout();
+        try {
+            return userService.Logout();
+        } catch (Exception e) {
+            return ResponseEntity.ok("Status 7000");
+        }
     }
 
 }

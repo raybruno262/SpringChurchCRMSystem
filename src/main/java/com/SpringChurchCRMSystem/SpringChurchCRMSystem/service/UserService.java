@@ -19,7 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.LevelRepository;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.UserRepository;
 
 import jakarta.mail.MessagingException;
@@ -32,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private LevelRepository levelRepository;
     private final ConcurrentHashMap<String, String> otpCache = new ConcurrentHashMap<>();
     private final JavaMailSender emailDispatcher;
     private final HttpSession userSession;
@@ -45,8 +49,17 @@ public class UserService {
                 return ResponseEntity.ok("Status 5000"); // Email exists
             }
 
+            if (user.getLevel() != null) {
+                Optional<Level> levelOpt = levelRepository.findById(user.getLevel().getLevelId());
+                if (levelOpt.isEmpty()) {
+                    return ResponseEntity.ok("Status 3000"); // level not found
+                }
+                user.setLevel(user.getLevel());
+            }
+
             // Encode password
             user.setPassword(encoder.encode(user.getPassword()));
+            user.setIsActive(true);
 
             // Handle profile picture
             if (file != null && !file.isEmpty()) {
@@ -95,7 +108,19 @@ public class UserService {
             }
 
             if (updatedData.getLevel() != null) {
+                Optional<Level> levelOpt = levelRepository.findById(updatedData.getLevel().getLevelId());
+                if (levelOpt.isEmpty()) {
+                    return ResponseEntity.ok("Status 3000"); // level not found
+                }
                 user.setLevel(updatedData.getLevel());
+            }
+
+            // Enabling User
+            if (Boolean.TRUE.equals(updatedData.getIsActive())) {
+                user.setIsActive(true);
+                // disabling a user
+            } else if (Boolean.FALSE.equals(updatedData.getIsActive())) {
+                user.setIsActive(false);
             }
 
             // Update profile picture if provided
@@ -104,56 +129,6 @@ public class UserService {
             }
 
             userRepository.save(user);
-            return ResponseEntity.ok("Status 1000"); // Success
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok("Status 9999"); // Unknown error
-        }
-    }
-
-    // Disabling a an active user
-    public ResponseEntity<String> disableUser(String userId) {
-        try {
-            Optional<User> userOpt = userRepository.findById(userId);
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.ok("Status 3000"); // User not found
-            }
-
-            User user = userOpt.get();
-
-            if (!user.isActive()) {
-                return ResponseEntity.ok("Status 3000"); // Already disabled
-            }
-
-            user.setActive(false);
-            userRepository.save(user);
-
-            return ResponseEntity.ok("Status 1000"); // Success
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok("Status 9999"); // Unknown error
-        }
-    }
-
-    // Enabling an inactive user
-    public ResponseEntity<String> enableUser(String userId) {
-        try {
-            Optional<User> userOpt = userRepository.findById(userId);
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.ok("Status 3000"); // User not found
-            }
-
-            User user = userOpt.get();
-
-            if (user.isActive()) {
-                return ResponseEntity.ok("Status 3000"); // Already enabled
-            }
-
-            user.setActive(true);
-            userRepository.save(user);
-
             return ResponseEntity.ok("Status 1000"); // Success
 
         } catch (Exception e) {
@@ -220,12 +195,12 @@ public class UserService {
             }
 
             // Check user status
-            if (!user.isActive()) {
+            if (!user.getIsActive()) {
                 // User is disabled
                 return ResponseEntity.ok("6000");
             }
             // Check level status
-            if (user.getLevel() == null || !user.getLevel().isActive()) {
+            if (user.getLevel() == null || !user.getLevel().getIsActive()) {
                 // inactive level
                 return ResponseEntity.ok("6000");
             }
@@ -319,12 +294,12 @@ public class UserService {
         User user = userOptional.get();
 
         // Check user status
-        if (!user.isActive()) {
+        if (!user.getIsActive()) {
             // User is disabled
             return ResponseEntity.ok("6000");
         }
         // Check level status
-        if (user.getLevel() == null || !user.getLevel().isActive()) {
+        if (user.getLevel() == null || !user.getLevel().getIsActive()) {
             // inactive level
             return ResponseEntity.ok("6000");
         }

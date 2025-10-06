@@ -21,7 +21,7 @@ public class Member {
     private String gender; // Male or Female
     private String maritalStatus; // Single or Married
     private String email;
-    private String status;// Active, Inactive or Transferred(method )
+    private String status;// Active, Inactive or Transferred
 
     private String address;
     @JsonFormat(pattern = "MM/dd/yyyy")
