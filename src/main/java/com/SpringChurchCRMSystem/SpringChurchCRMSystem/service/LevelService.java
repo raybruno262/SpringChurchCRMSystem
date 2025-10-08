@@ -405,4 +405,9 @@ public class LevelService {
         return true; // Reached top safely
     }
 
+    // get total level counts using level types
+    public int countByType(String type) {
+        return levelRepository.countByLevelType(type);
+    }
+
 }

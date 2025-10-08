@@ -1,6 +1,8 @@
 package com.SpringChurchCRMSystem.SpringChurchCRMSystem.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,6 +141,17 @@ public class LevelController {
 
         return levelService.getLevelById(levelId);
 
+    }
+
+    // get level counts by level types
+    @GetMapping("/levelCounts")
+    public Map<String, Integer> getLevelCounts() {
+        Map<String, Integer> counts = new HashMap<>();
+        counts.put("regions", levelService.countByType("REGION"));
+        counts.put("parishes", levelService.countByType("PARISH"));
+        counts.put("chapels", levelService.countByType("CHAPEL"));
+        counts.put("cells", levelService.countByType("CELL"));
+        return counts;
     }
 
 }

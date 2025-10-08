@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.service.UserService;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
+    private final HttpSession userSession;
 
     // create a user ( form-data)
     @PostMapping("/createrUser")
@@ -130,13 +132,12 @@ public class UserController {
 
     }
 
+    // Destroy the session
     @PostMapping("/destroySession")
-    public ResponseEntity<String> destroySession() {
-        try {
-            return userService.Logout();
-        } catch (Exception e) {
-            return ResponseEntity.ok("Status 7000");
-        }
+    public ResponseEntity<Void> logout() {
+        userSession.removeAttribute("loggedInUser");
+        userSession.invalidate();
+        return ResponseEntity.ok().build();
     }
 
 }

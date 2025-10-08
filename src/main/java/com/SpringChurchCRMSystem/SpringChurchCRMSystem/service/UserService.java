@@ -10,13 +10,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
@@ -253,7 +254,7 @@ public class UserService {
     }
     // verify otp and login
 
-    public ResponseEntity<String> verifyLoginCodeAndLogin(String email, String verifyCode, String password) {
+    public ResponseEntity<?> verifyLoginCodeAndLogin(String email, String verifyCode, String password) {
         String cacheKey = email + "login";
         String storedCode = otpCache.get(cacheKey);
 
@@ -275,7 +276,9 @@ public class UserService {
 
             otpCache.remove(cacheKey);
             userSession.setAttribute("loggedInUser", user);
-            return ResponseEntity.ok("Status 1000"); // Login successful
+
+            // Return full user object as JSON
+            return ResponseEntity.ok(user);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -296,12 +299,12 @@ public class UserService {
         // Check user status
         if (!user.getIsActive()) {
             // User is disabled
-            return ResponseEntity.ok("6000");
+            return ResponseEntity.ok("Status 6000");
         }
         // Check level status
         if (user.getLevel() == null || !user.getLevel().getIsActive()) {
             // inactive level
-            return ResponseEntity.ok("6000");
+            return ResponseEntity.ok("Status 6000");
         }
 
         String verifyCode = generateResetCode();
@@ -394,13 +397,6 @@ public class UserService {
             e.printStackTrace();
             return ResponseEntity.ok("Status 9999"); // Unknown error
         }
-    }
-
-    // Destroy the session
-    public ResponseEntity<String> Logout() {
-        userSession.removeAttribute("loggedInUser");
-        userSession.invalidate();
-        return ResponseEntity.ok("Status 1000");
     }
 
 }

@@ -36,4 +36,7 @@ public interface LevelRepository extends MongoRepository<Level, String> {
     // Find inactive children of a given parent
     List<Level> findByParentAndIsActiveFalse();
 
+    // get total level counts using level types
+    int countByLevelType(String levelType);
+
 }
