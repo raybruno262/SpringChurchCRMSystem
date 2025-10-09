@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.MemberStatsDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Member;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.service.MemberService;
@@ -57,11 +58,12 @@ public class MemberController {
 
     // Scoped paginated members based on hierarchy
     @GetMapping("/scopedPaginatedMembers")
-    public Page<Member> getScopedPaginatedMembers(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
-
-        return memberService.getScopedPaginatedMembers(page, size);
-
+    public Page<Member> getScopedPaginatedMembers(
+            @RequestParam String userId,
+            @RequestParam String levelId,
+            @RequestParam int page,
+            @RequestParam int size) {
+        return memberService.getScopedPaginatedMembers(userId, levelId, page, size);
     }
 
     // Scoped birthday members for current month
@@ -71,6 +73,12 @@ public class MemberController {
 
         return memberService.getScopedMembersWithBirthdaysThisMonth(page, size);
 
+    }
+
+    // member stats data
+    @GetMapping("/stats")
+    public MemberStatsDTO getScopedMemberStats(@RequestParam String userId) {
+        return memberService.getScopedMemberStats(userId);
     }
 
 }

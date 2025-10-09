@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.MemberStatsDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.BaptismInformation;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Member;
@@ -35,6 +36,8 @@ public class MemberService {
 
     @Autowired
     private HttpSession userSession;
+    @Autowired
+    private UserRepository userRepository;
 
     public ResponseEntity<String> createMember(Member member, MultipartFile file) {
         try {
@@ -244,27 +247,30 @@ public class MemberService {
     }
 
     // Get scoped members
-    public Page<Member> getScopedPaginatedMembers(int page, int size) {
-        User loggedInUser = (User) userSession.getAttribute("loggedInUser");
+    public Page<Member> getScopedPaginatedMembers(String userId, String levelId, int page, int size) {
+        User loggedInUser = userRepository.findById(userId).orElse(null);
         if (loggedInUser == null) {
             return Page.empty();
         }
 
-        // SuperAdmin sees every member
+        // SuperAdmin sees all members
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
             return memberRepository.findAll(PageRequest.of(page, size));
         }
 
-        // Get all Active cells under the user's level and include their own level
-        List<Level> scopedLevels = levelService.getAllActiveCellsUnder(loggedInUser.getLevel());
-        scopedLevels.add(loggedInUser.getLevel());
+        // Use the provided levelId instead of relying on loggedInUser.getLevel()
+        Level baseLevel = levelRepository.findById(levelId).orElse(null);
+        if (baseLevel == null) {
+            return Page.empty();
+        }
 
-        // Extract level IDs for reliable querying
+        List<Level> scopedLevels = levelService.getAllActiveCellsUnder(baseLevel);
+        scopedLevels.add(baseLevel);
+
         List<String> levelIds = scopedLevels.stream()
                 .map(Level::getLevelId)
                 .toList();
 
-        // Paginated query by level ID
         PageRequest pageable = PageRequest.of(page, size);
         return memberRepository.findByLevel_LevelIdIn(levelIds, pageable);
     }
@@ -308,6 +314,40 @@ public class MemberService {
 
         return new PageImpl<>(filtered, pageable, filtered.size());
 
+    }
+
+    // member stats data
+    public MemberStatsDTO getScopedMemberStats(String userId) {
+        User loggedInUser = userRepository.findById(userId).orElse(null);
+        if (loggedInUser == null) {
+            return new MemberStatsDTO(0, 0, 0, 0);
+        }
+
+        long total;
+        long active;
+        long inactive;
+        long transferred;
+
+        if (loggedInUser.getRole() == RoleType.SuperAdmin) {
+            total = memberRepository.count();
+            active = memberRepository.countByStatus("Active");
+            inactive = memberRepository.countByStatus("Inactive");
+            transferred = memberRepository.countByStatus("Transferred");
+        } else {
+            List<Level> scopedLevels = levelService.getAllActiveCellsUnder(loggedInUser.getLevel());
+            scopedLevels.add(loggedInUser.getLevel());
+
+            List<String> scopedLevelIds = scopedLevels.stream()
+                    .map(Level::getLevelId)
+                    .toList();
+
+            total = memberRepository.countByLevel_LevelIdIn(scopedLevelIds);
+            active = memberRepository.countByStatusAndLevel_LevelIdIn("Active", scopedLevelIds);
+            inactive = memberRepository.countByStatusAndLevel_LevelIdIn("Inactive", scopedLevelIds);
+            transferred = memberRepository.countByStatusAndLevel_LevelIdIn("Transferred", scopedLevelIds);
+        }
+
+        return new MemberStatsDTO(total, active, inactive, transferred);
     }
 
 }

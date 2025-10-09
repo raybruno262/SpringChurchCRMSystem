@@ -18,4 +18,10 @@ public interface MemberRepository extends MongoRepository<Member, String> {
     // Find paginated members with status = "Active"
     Page<Member> findByStatus(String status, Pageable pageable);
 
+    long countByStatus(String status);
+
+    long countByLevel_LevelIdIn(List<String> levelIds);
+
+    long countByStatusAndLevel_LevelIdIn(String status, List<String> levelIds);
+
 }

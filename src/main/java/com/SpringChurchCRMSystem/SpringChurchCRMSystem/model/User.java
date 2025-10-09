@@ -9,6 +9,7 @@ public class User {
     @Id
     private String userId;
     private String names;
+    private String username;
     private String email;
     private String password;
     private String phone;
@@ -26,10 +27,11 @@ public class User {
         this.userId = userId;
     }
 
-    public User(String userId, String names, String email, String password, String phone, Long nationalId,
-            RoleType role, byte[] profilePic, Boolean isActive, Level level) {
+    public User(String userId, String names, String username, String email, String password, String phone,
+            Long nationalId, RoleType role, byte[] profilePic, Boolean isActive, Level level) {
         this.userId = userId;
         this.names = names;
+        this.username = username;
         this.email = email;
         this.password = password;
         this.phone = phone;
@@ -54,6 +56,14 @@ public class User {
 
     public void setNames(String names) {
         this.names = names;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {
