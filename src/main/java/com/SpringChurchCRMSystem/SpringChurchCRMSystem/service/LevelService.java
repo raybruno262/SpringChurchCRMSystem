@@ -410,4 +410,17 @@ public class LevelService {
         return levelRepository.countByLevelType(type);
     }
 
+    // get all levels under a level
+    public List<Level> getAllLevelsUnder(Level level) {
+        List<Level> children = levelRepository.findByParent(level);
+        List<Level> allLevels = new ArrayList<>();
+
+        for (Level child : children) {
+            allLevels.add(child); // include every child
+            allLevels.addAll(getAllLevelsUnder(child)); // recurse
+        }
+
+        return allLevels;
+    }
+
 }

@@ -247,31 +247,29 @@ public class MemberService {
     }
 
     // Get scoped members
-    public Page<Member> getScopedPaginatedMembers(String userId, String levelId, int page, int size) {
-        User loggedInUser = userRepository.findById(userId).orElse(null);
+    public Page<Member> getScopedPaginatedMembers(int page, int size) {
+        User loggedInUser = (User) userSession.getAttribute("loggedInUser");
         if (loggedInUser == null) {
             return Page.empty();
         }
+        System.out.println("Logged-in user: " + loggedInUser.getUserId());
+        System.out.println("User level: " + loggedInUser.getLevel());
+        System.out.println("User role: " + loggedInUser.getRole());
 
-        // SuperAdmin sees all members
+        PageRequest pageable = PageRequest.of(page, size);
+
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
-            return memberRepository.findAll(PageRequest.of(page, size));
+            return memberRepository.findAll(pageable);
         }
 
-        // Use the provided levelId instead of relying on loggedInUser.getLevel()
-        Level baseLevel = levelRepository.findById(levelId).orElse(null);
-        if (baseLevel == null) {
-            return Page.empty();
-        }
-
-        List<Level> scopedLevels = levelService.getAllActiveCellsUnder(baseLevel);
-        scopedLevels.add(baseLevel);
+        List<Level> scopedLevels = levelService.getAllLevelsUnder(loggedInUser.getLevel());
+        scopedLevels.add(loggedInUser.getLevel());
 
         List<String> levelIds = scopedLevels.stream()
                 .map(Level::getLevelId)
                 .toList();
+        System.out.println("Scoped level IDs: " + scopedLevels.stream().map(Level::getLevelId).toList());
 
-        PageRequest pageable = PageRequest.of(page, size);
         return memberRepository.findByLevel_LevelIdIn(levelIds, pageable);
     }
 

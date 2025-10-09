@@ -59,11 +59,10 @@ public class MemberController {
     // Scoped paginated members based on hierarchy
     @GetMapping("/scopedPaginatedMembers")
     public Page<Member> getScopedPaginatedMembers(
-            @RequestParam String userId,
-            @RequestParam String levelId,
-            @RequestParam int page,
-            @RequestParam int size) {
-        return memberService.getScopedPaginatedMembers(userId, levelId, page, size);
+      
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return memberService.getScopedPaginatedMembers(page, size);
     }
 
     // Scoped birthday members for current month
