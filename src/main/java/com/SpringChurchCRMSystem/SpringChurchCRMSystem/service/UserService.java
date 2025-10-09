@@ -146,32 +146,10 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    // Get all active users
-    public List<User> getAllActiveUsers() {
-        return userRepository.findByIsActiveTrue();
-    }
-
-    // Get all inactive users
-    public List<User> getAllInActiveUsers() {
-        return userRepository.findByIsActiveFalse();
-    }
-
     // Getting all paginated users
     public Page<User> getPaginatedUsers(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
         return userRepository.findAll(pageable);
-    }
-
-    // Getting all paginated Active users
-    public Page<User> getPaginatedActiveUsers(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-        return userRepository.findByIsActiveTrue(pageable);
-    }
-
-    // Getting all paginated Inactive users
-    public Page<User> getPaginatedInactiveUsers(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-        return userRepository.findByIsActiveFalse(pageable);
     }
 
     // Generating reset random numbers

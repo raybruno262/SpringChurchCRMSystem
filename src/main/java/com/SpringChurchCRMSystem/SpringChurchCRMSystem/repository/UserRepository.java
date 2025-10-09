@@ -24,10 +24,6 @@ public interface UserRepository extends MongoRepository<User, String> {
     // Pagination
     Page<User> findAll(Pageable pageable);
 
-    // paginate active users
-    Page<User> findByIsActiveTrue(Pageable pageable);
-
-    // paginated inactive users
-    Page<User> findByIsActiveFalse(Pageable pageable);
+    User findByUserId(String userId);
 
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Member;
 
 public interface MemberRepository extends MongoRepository<Member, String> {
@@ -15,13 +16,15 @@ public interface MemberRepository extends MongoRepository<Member, String> {
 
     Page<Member> findByLevel_LevelIdIn(List<String> levelIds, Pageable pageable);
 
+    Page<Member> findByLevelIn(List<Level> levels, Pageable pageable);
+
     // Find paginated members with status = "Active"
     Page<Member> findByStatus(String status, Pageable pageable);
 
     long countByStatus(String status);
 
-    long countByLevel_LevelIdIn(List<String> levelIds);
+    long countByLevelIn(List<Level> levels);
 
-    long countByStatusAndLevel_LevelIdIn(String status, List<String> levelIds);
+    long countByStatusAndLevelIn(String status, List<Level> levels);
 
 }

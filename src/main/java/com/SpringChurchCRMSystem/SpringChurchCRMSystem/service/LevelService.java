@@ -3,6 +3,7 @@ package com.SpringChurchCRMSystem.SpringChurchCRMSystem.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -173,32 +174,10 @@ public class LevelService {
         return levelRepository.findAll();
     }
 
-    // Get all Active Levels
-    public List<Level> getAllActiveLevels() {
-        return levelRepository.findByIsActiveTrue();
-    }
-
-    // Get all inactive levels
-    public List<Level> getAllInactiveLevels() {
-        return levelRepository.findByIsActiveFalse();
-    }
-
     // Getting all paginated levels
     public Page<Level> getPaginatedLevels(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
         return levelRepository.findAll(pageable);
-    }
-
-    // Getting all paginated Active levels
-    public Page<Level> getPaginatedActiveLevels(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-        return levelRepository.findByIsActiveTrue(pageable);
-    }
-
-    // Getting all paginated Inactive levels
-    public Page<Level> getPaginatedInactiveLevels(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-        return levelRepository.findByIsActiveFalse(pageable);
     }
 
     // Find Descendants void method
@@ -219,70 +198,9 @@ public class LevelService {
         return descendants;
     }
 
-    // Find all Descendants for all Active levels
-    public List<Level> getActiveDescendants(String parentId) {
-        List<Level> allLevels = levelRepository.findByIsActiveTrue();
-        List<Level> activeDescendants = new ArrayList<>();
-        findDescendants(parentId, allLevels, activeDescendants);
-        return activeDescendants;
-    }
-
-    // Find all Descendants for all InActive levels
-    public List<Level> getInactiveDescendants(String parentId) {
-        List<Level> allLevels = levelRepository.findByIsActiveFalse();
-        List<Level> inactiveDescendants = new ArrayList<>();
-        findDescendants(parentId, allLevels, inactiveDescendants);
-        return inactiveDescendants;
-    }
-
     // find level by Id
     public Optional<Level> getLevelById(String levelId) {
         return levelRepository.findById(levelId);
-    }
-
-    // Get all cells under each level
-    public List<Level> getAllCellsUnder(Level level) {
-        List<Level> children = levelRepository.findByParent(level);
-        List<Level> cells = new ArrayList<>();
-
-        for (Level child : children) {
-            if (child.getLevelType() == LevelType.CELL) {
-                cells.add(child);
-            } else {
-                cells.addAll(getAllCellsUnder(child));
-            }
-        }
-        return cells;
-    }
-
-    // Get All Active Cells Under a Level
-    public List<Level> getAllActiveCellsUnder(Level level) {
-        List<Level> children = levelRepository.findByParent(level);
-        List<Level> activeCells = new ArrayList<>();
-
-        for (Level child : children) {
-            if (child.getLevelType() == LevelType.CELL && child.getIsActive()) {
-                activeCells.add(child);
-            } else {
-                activeCells.addAll(getAllActiveCellsUnder(child));
-            }
-        }
-        return activeCells;
-    }
-
-    // Get All inactive cells under a level
-    public List<Level> getAllInactiveCellsUnder(Level level) {
-        List<Level> children = levelRepository.findByParent(level);
-        List<Level> inactiveCells = new ArrayList<>();
-
-        for (Level child : children) {
-            if (child.getLevelType() == LevelType.CELL && !child.getIsActive()) {
-                inactiveCells.add(child);
-            } else {
-                inactiveCells.addAll(getAllInactiveCellsUnder(child));
-            }
-        }
-        return inactiveCells;
     }
 
     // Update level
@@ -412,15 +330,30 @@ public class LevelService {
 
     // get all levels under a level
     public List<Level> getAllLevelsUnder(Level level) {
-        List<Level> children = levelRepository.findByParent(level);
         List<Level> allLevels = new ArrayList<>();
+        allLevels.add(level);
 
+        List<Level> children = levelRepository.findByParent(level);
         for (Level child : children) {
-            allLevels.add(child); // include every child
-            allLevels.addAll(getAllLevelsUnder(child)); // recurse
+            allLevels.addAll(getAllLevelsUnder(child));
         }
 
         return allLevels;
+    }
+
+    // get all cells under
+    public List<Level> getAllCellsUnder(Level level) {
+        List<Level> allLevels = getAllLevelsUnder(level);
+
+        List<Level> cells = allLevels.stream()
+                .filter(l -> l.getLevelType() == LevelType.CELL)
+                .collect(Collectors.toList());
+
+        if (level.getLevelType() == LevelType.CELL && !cells.contains(level)) {
+            cells.add(level);
+        }
+
+        return cells;
     }
 
 }

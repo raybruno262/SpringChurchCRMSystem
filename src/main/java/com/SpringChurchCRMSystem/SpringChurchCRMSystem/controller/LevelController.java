@@ -68,22 +68,6 @@ public class LevelController {
 
     }
 
-    // getting all Active levels
-    @GetMapping("/getAllActiveLevels")
-    public List<Level> getAllActiveLevels() {
-
-        return levelService.getAllActiveLevels();
-
-    }
-
-    // getting all Inactive levels
-    @GetMapping("/getAllInactiveLevels")
-    public List<Level> getAllInactiveLevels() {
-
-        return levelService.getAllInactiveLevels();
-
-    }
-
     // get all paginated levels
     @GetMapping("/paginatedLevels")
     public Page<Level> getPaginatedLevels(@RequestParam(defaultValue = "0") int page,
@@ -93,45 +77,11 @@ public class LevelController {
 
     }
 
-    // get all paginated Active levels
-    @GetMapping("/getPaginatedActiveLevels")
-    public Page<Level> getPaginatedActiveLevels(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
-
-        return levelService.getPaginatedActiveLevels(page, size);
-
-    }
-
-    // get all paginated Inactivelevels
-    @GetMapping("/getPaginatedInactiveLevels")
-    public Page<Level> getPaginatedInactiveLevels(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
-
-        return levelService.getPaginatedInactiveLevels(page, size);
-
-    }
-
     // get all Descendants of a level
     @GetMapping("/getAllDescendants")
     public List<Level> getAllDescendants(@RequestParam String parentId) {
 
         return levelService.getAllDescendants(parentId);
-
-    }
-
-    // get all Descendants of Active level
-    @GetMapping("/getActiveDescendants")
-    public List<Level> getActiveDescendants(@RequestParam String parentId) {
-
-        return levelService.getActiveDescendants(parentId);
-
-    }
-
-    // get all Descendants of InActive level
-    @GetMapping("/getInactiveDescendants")
-    public List<Level> getInactiveDescendants(@RequestParam String parentId) {
-
-        return levelService.getInactiveDescendants(parentId);
 
     }
 

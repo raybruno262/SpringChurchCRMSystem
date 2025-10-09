@@ -17,10 +17,6 @@ public interface LevelRepository extends MongoRepository<Level, String> {
     // Pagination
     Page<Level> findAll(Pageable pageable);
 
-    Page<Level> findByIsActiveTrue(Pageable pageable);
-
-    Page<Level> findByIsActiveFalse(Pageable pageable);
-
     // Find children of a given parent
     List<Level> findByParent(Level parent);
 
@@ -29,12 +25,6 @@ public interface LevelRepository extends MongoRepository<Level, String> {
 
     // Find all inactive levels
     List<Level> findByIsActiveFalse();
-
-    // Find active children of a given parent
-    List<Level> findByParentAndIsActiveTrue();
-
-    // Find inactive children of a given parent
-    List<Level> findByParentAndIsActiveFalse();
 
     // get total level counts using level types
     int countByLevelType(String levelType);

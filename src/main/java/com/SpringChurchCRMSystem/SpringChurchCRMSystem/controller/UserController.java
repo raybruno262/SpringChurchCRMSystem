@@ -59,46 +59,12 @@ public class UserController {
 
     }
 
-    // get all active users
-    @GetMapping("/getAllInActiveUsers")
-    public List<User> getAllInActiveUsers() {
-
-        return userService.getAllInActiveUsers();
-
-    }
-
-    // get all inactive users
-    @GetMapping("/getAllActiveUsers")
-    public List<User> getAllActiveUsers() {
-
-        return userService.getAllActiveUsers();
-
-    }
-
     // get all paginated users
     @GetMapping("/getPaginatedUsers")
     public Page<User> getPaginatedUsers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
 
         return userService.getPaginatedUsers(page, size);
-
-    }
-
-    // get all paginated Active users
-    @GetMapping("/getPaginatedActiveUsers")
-    public Page<User> getPaginatedActiveUsers(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
-
-        return userService.getPaginatedActiveUsers(page, size);
-
-    }
-
-    // get all paginated Inactive users
-    @GetMapping("/getPaginatedInactiveUsers")
-    public Page<User> getPaginatedInactiveUsers(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
-
-        return userService.getPaginatedInactiveUsers(page, size);
 
     }
 

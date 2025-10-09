@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.MemberStatsDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.BaptismInformation;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.LevelType;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Member;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.RoleType;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
@@ -247,14 +248,11 @@ public class MemberService {
     }
 
     // Get scoped members
-    public Page<Member> getScopedPaginatedMembers(int page, int size) {
-        User loggedInUser = (User) userSession.getAttribute("loggedInUser");
+    public Page<Member> getScopedPaginatedMembers(int page, int size, String userId) {
+        User loggedInUser = userRepository.findByUserId(userId);
         if (loggedInUser == null) {
             return Page.empty();
         }
-        System.out.println("Logged-in user: " + loggedInUser.getUserId());
-        System.out.println("User level: " + loggedInUser.getLevel());
-        System.out.println("User role: " + loggedInUser.getRole());
 
         PageRequest pageable = PageRequest.of(page, size);
 
@@ -262,61 +260,54 @@ public class MemberService {
             return memberRepository.findAll(pageable);
         }
 
-        List<Level> scopedLevels = levelService.getAllLevelsUnder(loggedInUser.getLevel());
-        scopedLevels.add(loggedInUser.getLevel());
+        List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
 
-        List<String> levelIds = scopedLevels.stream()
-                .map(Level::getLevelId)
-                .toList();
-        System.out.println("Scoped level IDs: " + scopedLevels.stream().map(Level::getLevelId).toList());
+        if (loggedInUser.getLevel().getLevelType() == LevelType.CELL &&
+                !scopedCells.contains(loggedInUser.getLevel())) {
+            scopedCells.add(loggedInUser.getLevel());
+        }
 
-        return memberRepository.findByLevel_LevelIdIn(levelIds, pageable);
+        return memberRepository.findByLevelIn(scopedCells, pageable);
     }
 
     // Get scoped Birthdays
-    public Page<Member> getScopedMembersWithBirthdaysThisMonth(int page, int size) {
-        User loggedInUser = (User) userSession.getAttribute("loggedInUser");
+    public Page<Member> getScopedMembersWithBirthdaysThisMonth(int page, int size, String userId) {
+        User loggedInUser = userRepository.findByUserId(userId);
         if (loggedInUser == null) {
             return Page.empty();
         }
-        // Get current Month
-        int currentMonth = LocalDate.now().getMonthValue();
 
-        // paginated request
+        int currentMonth = LocalDate.now().getMonthValue();
         PageRequest pageable = PageRequest.of(page, size);
 
-        // SuperAdmin sees all birthdays
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
-            Page<Member> allMembers = memberRepository.findByStatus("Active", PageRequest.of(page, size));
-
-            List<Member> filtered = allMembers.getContent().stream().filter(member -> member.getDateOfBirth() != null &&
-                    member.getDateOfBirth().getMonthValue() == currentMonth).toList();
+            Page<Member> allMembers = memberRepository.findAll(pageable);
+            List<Member> filtered = allMembers.getContent().stream()
+                    .filter(member -> member.getDateOfBirth() != null &&
+                            member.getDateOfBirth().getMonthValue() == currentMonth)
+                    .toList();
             return new PageImpl<>(filtered, pageable, filtered.size());
-
         }
 
-        // Scoped Active levels for CellAdmin
-        List<Level> scopedLevels = levelService.getAllActiveCellsUnder(loggedInUser.getLevel());
-        scopedLevels.add(loggedInUser.getLevel());
-        List<String> levelIds = scopedLevels.stream()
-                .map(Level::getLevelId)
-                .toList();
+        List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
 
-        // Scoped Birthday Members
-        // Scoped members
-        Page<Member> scopedMembers = memberRepository.findByLevel_LevelIdIn(levelIds, pageable);
+        if (loggedInUser.getLevel().getLevelType() == LevelType.CELL &&
+                !scopedCells.contains(loggedInUser.getLevel())) {
+            scopedCells.add(loggedInUser.getLevel());
+        }
+
+        Page<Member> scopedMembers = memberRepository.findByLevelIn(scopedCells, pageable);
         List<Member> filtered = scopedMembers.getContent().stream()
                 .filter(member -> member.getDateOfBirth() != null &&
                         member.getDateOfBirth().getMonthValue() == currentMonth)
                 .toList();
 
         return new PageImpl<>(filtered, pageable, filtered.size());
-
     }
 
     // member stats data
     public MemberStatsDTO getScopedMemberStats(String userId) {
-        User loggedInUser = userRepository.findById(userId).orElse(null);
+        User loggedInUser = userRepository.findByUserId(userId);
         if (loggedInUser == null) {
             return new MemberStatsDTO(0, 0, 0, 0);
         }
@@ -332,17 +323,19 @@ public class MemberService {
             inactive = memberRepository.countByStatus("Inactive");
             transferred = memberRepository.countByStatus("Transferred");
         } else {
-            List<Level> scopedLevels = levelService.getAllActiveCellsUnder(loggedInUser.getLevel());
-            scopedLevels.add(loggedInUser.getLevel());
+            // ✅ Use scoped CELL levels (DBRef Level objects)
+            List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
 
-            List<String> scopedLevelIds = scopedLevels.stream()
-                    .map(Level::getLevelId)
-                    .toList();
+            if (loggedInUser.getLevel().getLevelType() == LevelType.CELL &&
+                    !scopedCells.contains(loggedInUser.getLevel())) {
+                scopedCells.add(loggedInUser.getLevel());
+            }
 
-            total = memberRepository.countByLevel_LevelIdIn(scopedLevelIds);
-            active = memberRepository.countByStatusAndLevel_LevelIdIn("Active", scopedLevelIds);
-            inactive = memberRepository.countByStatusAndLevel_LevelIdIn("Inactive", scopedLevelIds);
-            transferred = memberRepository.countByStatusAndLevel_LevelIdIn("Transferred", scopedLevelIds);
+            // ✅ Count using DBRef Level objects
+            total = memberRepository.countByLevelIn(scopedCells);
+            active = memberRepository.countByStatusAndLevelIn("Active", scopedCells);
+            inactive = memberRepository.countByStatusAndLevelIn("Inactive", scopedCells);
+            transferred = memberRepository.countByStatusAndLevelIn("Transferred", scopedCells);
         }
 
         return new MemberStatsDTO(total, active, inactive, transferred);
