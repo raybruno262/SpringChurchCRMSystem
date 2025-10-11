@@ -22,13 +22,13 @@ public class MemberController {
     private MemberService memberService;
 
     // create a user ( form-data)
-    @PostMapping("/createMember")
+    @PostMapping("/createMember/{userId}")
     public ResponseEntity<String> createUser(
             @RequestPart("member") Member member,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @PathVariable String userId) {
 
-        return memberService.createMember(member, file);
-
+        return memberService.createMember(member, file, userId);
     }
 
     @GetMapping("/allMembers")
@@ -38,13 +38,14 @@ public class MemberController {
 
     }
 
-    @PutMapping("/updateMember/{memberId}")
+    @PutMapping("/updateMember/{memberId}/{userId}")
     public ResponseEntity<String> updateMember(
             @PathVariable String memberId,
+            @PathVariable String userId,
             @RequestPart("member") Member updatedData,
             @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        return memberService.updateMember(memberId, updatedData, file);
+        return memberService.updateMember(memberId, updatedData, file, userId);
 
     }
 

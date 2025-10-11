@@ -36,13 +36,11 @@ public class MemberService {
     private LevelRepository levelRepository;
 
     @Autowired
-    private HttpSession userSession;
-    @Autowired
     private UserRepository userRepository;
 
-    public ResponseEntity<String> createMember(Member member, MultipartFile file) {
+    public ResponseEntity<String> createMember(Member member, MultipartFile file, String userId) {
         try {
-            User loggedInUser = (User) userSession.getAttribute("loggedInUser");
+            User loggedInUser = userRepository.findByUserId(userId);
 
             // No user logged in
             if (loggedInUser == null) {
@@ -130,10 +128,9 @@ public class MemberService {
     }
 
     // Update all members
-    public ResponseEntity<String> updateMember(String memberId, Member updatedData, MultipartFile file) {
+    public ResponseEntity<String> updateMember(String memberId, Member updatedData, MultipartFile file, String userId) {
         try {
-            User loggedInUser = (User) userSession.getAttribute("loggedInUser");
-
+            User loggedInUser = userRepository.findByUserId(userId);
             // No user logged in
             if (loggedInUser == null) {
                 return ResponseEntity.ok("Status 4000");

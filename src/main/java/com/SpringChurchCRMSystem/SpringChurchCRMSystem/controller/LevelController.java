@@ -104,4 +104,10 @@ public class LevelController {
         return counts;
     }
 
+    // get all cells
+    @GetMapping("allCells")
+    public List<Level> getAllCells() {
+        return levelService.getAllCells();
+    }
+
 }

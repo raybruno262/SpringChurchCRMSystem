@@ -174,6 +174,11 @@ public class LevelService {
         return levelRepository.findAll();
     }
 
+    // find all cells
+    public List<Level> getAllCells() {
+        return levelRepository.findByLevelType(LevelType.CELL);
+    }
+
     // Getting all paginated levels
     public Page<Level> getPaginatedLevels(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);

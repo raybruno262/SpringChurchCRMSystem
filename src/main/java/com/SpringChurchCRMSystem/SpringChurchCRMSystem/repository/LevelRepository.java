@@ -29,4 +29,7 @@ public interface LevelRepository extends MongoRepository<Level, String> {
     // get total level counts using level types
     int countByLevelType(String levelType);
 
+    // find by leveltype
+    List<Level> findByLevelType(LevelType levelType);
+
 }
