@@ -18,6 +18,8 @@ public interface MemberRepository extends MongoRepository<Member, String> {
 
     Page<Member> findByLevelIn(List<Level> levels, Pageable pageable);
 
+    List<Member> findByLevelIn(List<Level> levels);
+
     // Find paginated members with status = "Active"
     Page<Member> findByStatus(String status, Pageable pageable);
 

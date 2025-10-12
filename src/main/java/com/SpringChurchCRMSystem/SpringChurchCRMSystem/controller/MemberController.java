@@ -81,4 +81,10 @@ public class MemberController {
         return memberService.getScopedMemberStats(userId);
     }
 
+    // Birthday in a month
+    @GetMapping("/birthday")
+    public long getScopedBirthdayCountThisMonth(@RequestParam String userId) {
+        return memberService.getScopedBirthdayCountThisMonth(userId);
+    }
+
 }

@@ -58,6 +58,11 @@ public class DepartmentService {
 
     }
 
+    // deparment count
+    public long getTotalDepartmentCount() {
+        return departmentRepository.count();
+    }
+
     // get all paginated departments
     public Page<Department> getPaginatedDepartments(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);

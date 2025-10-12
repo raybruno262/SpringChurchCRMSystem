@@ -38,7 +38,7 @@ public class UserController {
 
         return userService.createUser(user, file);
 
-    }
+    }     
 
     // update a user
     @PutMapping("/updateUser/{userId}")

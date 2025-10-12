@@ -57,6 +57,14 @@ public class DepartmentController {
 
     }
 
+    // deparment count
+    @GetMapping("/count")
+    public long getTotalDepartmentCount() {
+
+        return departmentService.getTotalDepartmentCount();
+
+    }
+
     // get paginated departments
     @GetMapping("/getPaginatedDepartments")
     public Page<Department> getPaginatedDepartments(@RequestParam(defaultValue = "0") int page,

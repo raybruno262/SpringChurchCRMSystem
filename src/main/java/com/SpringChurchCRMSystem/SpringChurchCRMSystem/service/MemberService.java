@@ -338,4 +338,35 @@ public class MemberService {
         return new MemberStatsDTO(total, active, inactive, transferred);
     }
 
+    // Total birthdays within a month
+    public long getScopedBirthdayCountThisMonth(String userId) {
+        User loggedInUser = userRepository.findByUserId(userId);
+        if (loggedInUser == null) {
+            return 0;
+        }
+
+        int currentMonth = LocalDate.now().getMonthValue();
+
+        if (loggedInUser.getRole() == RoleType.SuperAdmin) {
+            List<Member> allMembers = memberRepository.findAll();
+            return allMembers.stream()
+                    .filter(member -> member.getDateOfBirth() != null &&
+                            member.getDateOfBirth().getMonthValue() == currentMonth)
+                    .count();
+        }
+
+        List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
+
+        if (loggedInUser.getLevel().getLevelType() == LevelType.CELL &&
+                !scopedCells.contains(loggedInUser.getLevel())) {
+            scopedCells.add(loggedInUser.getLevel());
+        }
+
+        List<Member> scopedMembers = memberRepository.findByLevelIn(scopedCells);
+        return scopedMembers.stream()
+                .filter(member -> member.getDateOfBirth() != null &&
+                        member.getDateOfBirth().getMonthValue() == currentMonth)
+                .count();
+    }
+
 }
