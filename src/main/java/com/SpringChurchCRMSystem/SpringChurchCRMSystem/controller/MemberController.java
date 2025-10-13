@@ -38,7 +38,7 @@ public class MemberController {
 
     }
 
-    @PutMapping("/updateMember/{memberId}/{userId}")
+    @PostMapping("/updateMember/{memberId}/{userId}")
     public ResponseEntity<String> updateMember(
             @PathVariable String memberId,
             @PathVariable String userId,

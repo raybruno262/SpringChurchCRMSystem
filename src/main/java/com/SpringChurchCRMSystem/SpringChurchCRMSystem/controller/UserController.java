@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.UserStatsDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.service.UserService;
 
@@ -38,7 +39,13 @@ public class UserController {
 
         return userService.createUser(user, file);
 
-    }     
+    }
+
+    // user stats
+    @GetMapping("/stats")
+    public UserStatsDTO getScopedUsersStats(@RequestParam String userId) {
+        return userService.getUserStats(userId);
+    }
 
     // update a user
     @PutMapping("/updateUser/{userId}")

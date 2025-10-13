@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Document(collection = "members")
 public class Member {
-    @Id     
+    @Id
     private String memberId;
     private String names;
 
     @JsonFormat(pattern = "MM/dd/yyyy")
     private LocalDate dateOfBirth;
-
+    
     private String phone;
     private String gender; // Male or Female
     private String maritalStatus; // Single or Married

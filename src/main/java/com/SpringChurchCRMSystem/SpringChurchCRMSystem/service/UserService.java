@@ -20,7 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.MemberStatsDTO;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.UserStatsDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.LevelType;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.RoleType;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.LevelRepository;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.UserRepository;
@@ -378,6 +382,26 @@ public class UserService {
             e.printStackTrace();
             return ResponseEntity.ok("Status 9999"); // Unknown error
         }
+    }
+
+    // User Stats
+    public UserStatsDTO getUserStats(String userId) {
+        User loggedInUser = userRepository.findByUserId(userId);
+        if (loggedInUser == null) {
+            return new UserStatsDTO(0, 0, 0);
+        }
+
+        long total = 0;
+        long active = 0;
+        long inactive = 0;
+
+        if (loggedInUser.getRole() == RoleType.SuperAdmin) {
+            total = userRepository.count();
+            active = userRepository.countByIsActive(true);
+            inactive = userRepository.countByIsActive(false);
+        }
+
+        return new UserStatsDTO(total, active, inactive);
     }
 
 }
