@@ -30,17 +30,24 @@ public class LevelController {
 
     // creating all levels
     @PostMapping("/createAllLevels")
-    public ResponseEntity<String> createAllLevels(@RequestParam String headquarterName,
-            @RequestParam String headquarterAddress,
-            @RequestParam String regionName, @RequestParam String regionAddress,
-            @RequestParam String parishName, @RequestParam String parishAddress,
-            @RequestParam String chapelName, @RequestParam String chapelAddress,
-            @RequestParam String cellName, @RequestParam String cellAddress) {
+    public ResponseEntity<String> createAllLevels(
+            @RequestParam(required = false) String headquarterName,
+            @RequestParam(required = false) String headquarterAddress,
+            @RequestParam(required = false) String regionName,
+            @RequestParam(required = false) String regionAddress,
+            @RequestParam(required = false) String parishName,
+            @RequestParam(required = false) String parishAddress,
+            @RequestParam(required = false) String chapelName,
+            @RequestParam(required = false) String chapelAddress,
+            @RequestParam(required = false) String cellName,
+            @RequestParam(required = false) String cellAddress, @PathVariable String userId) {
 
-        return levelService.createAllLevels(headquarterName, headquarterAddress, regionName,
-                regionAddress, parishName, parishAddress, chapelName, chapelAddress,
-                cellName, cellAddress);
-
+        return levelService.createAllLevels(
+                headquarterName, headquarterAddress,
+                regionName, regionAddress,
+                parishName, parishAddress,
+                chapelName, chapelAddress,
+                cellName, cellAddress, userId);
     }
 
     // addd one level from an existing parent
