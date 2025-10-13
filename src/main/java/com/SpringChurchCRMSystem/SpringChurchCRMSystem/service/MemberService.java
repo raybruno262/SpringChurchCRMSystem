@@ -115,6 +115,10 @@ public class MemberService {
         }
     }
 
+    public Member getMemberById(String memberId) {
+        return memberRepository.findById(memberId).orElse(null);
+    }
+
     // Find all members
     public List<Member> getAllMembers() {
         return memberRepository.findAll();

@@ -38,6 +38,16 @@ public class MemberController {
 
     }
 
+    @GetMapping("/{memberId}")
+    public ResponseEntity<Member> getMemberById(@PathVariable String memberId) {
+        Member member = memberService.getMemberById(memberId);
+        if (member != null) {
+            return ResponseEntity.ok(member);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping("/updateMember/{memberId}/{userId}")
     public ResponseEntity<String> updateMember(
             @PathVariable String memberId,
