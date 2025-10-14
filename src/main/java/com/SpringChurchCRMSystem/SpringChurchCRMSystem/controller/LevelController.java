@@ -64,10 +64,11 @@ public class LevelController {
     }
 
     // Update level
-    @PutMapping("/updateLevel/{levelId}")
-    public ResponseEntity<String> updateLevel(@PathVariable String levelId, @RequestBody Level updatedData) {
+    @PutMapping("/updateLevel/{levelId}/{userId}")
+    public ResponseEntity<String> updateLevel(@PathVariable String levelId, @RequestBody Level updatedData,
+            @PathVariable String userId) {
 
-        return levelService.updateLevel(levelId, updatedData);
+        return levelService.updateLevel(levelId, updatedData, userId);
 
     }
 

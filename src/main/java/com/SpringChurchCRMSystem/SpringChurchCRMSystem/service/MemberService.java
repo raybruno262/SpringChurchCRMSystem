@@ -47,8 +47,8 @@ public class MemberService {
                 return ResponseEntity.ok("Status 4000");
             }
 
-            // Not a CellAdmin
-            if (loggedInUser.getRole() != RoleType.CellAdmin) {
+            // Not a CellAdmin or admin
+            if (loggedInUser.getRole() != RoleType.CellAdmin && loggedInUser.getRole() != RoleType.SuperAdmin) {
                 return ResponseEntity.ok("Status 6000");
             }
 
@@ -99,7 +99,7 @@ public class MemberService {
 
             // Member creation logic
             member.setMembershipDate(LocalDate.now());
-            member.setLevel(loggedInUser.getLevel());
+
             member.setStatus("Active");
 
             memberRepository.save(member);

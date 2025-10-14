@@ -233,12 +233,12 @@ public class LevelService {
     }
 
     // Update level
-    public ResponseEntity<String> updateLevel(String levelId, Level updatedData) {
+    public ResponseEntity<String> updateLevel(String levelId, Level updatedData, String userId) {
         try {
-            User loggedInUser = (User) userSession.getAttribute("loggedInUser");
-
+            User loggedInUser = userRepository.findByUserId(userId);
             if (loggedInUser == null)
                 return ResponseEntity.ok("Status 4000");
+
             if (loggedInUser.getRole() != RoleType.SuperAdmin)
                 return ResponseEntity.ok("Status 6000");
 
