@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.CustomGlobalExceptionHandler;
@@ -32,7 +34,6 @@ public class LevelService {
     @Autowired
     private HttpSession userSession;
 
-    // Creating all levels at once
     public ResponseEntity<String> createAllLevels(
             @RequestParam(required = false) String headquarterName,
             @RequestParam(required = false) String headquarterAddress,
@@ -43,144 +44,94 @@ public class LevelService {
             @RequestParam(required = false) String chapelName,
             @RequestParam(required = false) String chapelAddress,
             @RequestParam(required = false) String cellName,
-            @RequestParam(required = false) String cellAddress, String userId) {
+            @RequestParam(required = false) String cellAddress,
+            @PathVariable String userId) {
 
         try {
             User loggedInUser = userRepository.findByUserId(userId);
-
-            // No user logged in
-            if (loggedInUser == null) {
+            if (loggedInUser == null)
                 return ResponseEntity.ok("Status 4000");
-            }
-
-            // Not a SuperAdmin
-            if (loggedInUser.getRole() != RoleType.SuperAdmin) {
+            if (loggedInUser.getRole() != RoleType.SuperAdmin)
                 return ResponseEntity.ok("Status 6000");
-            }
 
             Level headquarter;
 
-            // Check if headquarter fields are provided
             if (headquarterName != null && !headquarterName.trim().isEmpty() &&
                     headquarterAddress != null && !headquarterAddress.trim().isEmpty()) {
 
-                // Create new headquarter or use existing
-                Optional<Level> existingHeadquarter = levelRepository.findByNameAndLevelType(headquarterName.trim(),
-                        LevelType.HEADQUARTER);
-
-                if (existingHeadquarter.isPresent()) {
-                    // Headquarter already exists, use the existing one
-                    headquarter = existingHeadquarter.get();
-                    // Optional: Update address if different
-                    if (!headquarter.getAddress().equals(headquarterAddress.trim())) {
-                        headquarter.setAddress(headquarterAddress.trim());
-                        headquarter = levelRepository.save(headquarter);
-                    }
-                } else {
-                    // Create new headquarter
-                    headquarter = new Level();
-                    headquarter.setName(headquarterName.trim());
-                    headquarter.setAddress(headquarterAddress.trim());
-                    headquarter.setLevelType(LevelType.HEADQUARTER);
-                    headquarter.setIsActive(true);
-                    headquarter = levelRepository.save(headquarter);
-                }
+                headquarter = new Level();
+                headquarter.setName(headquarterName.trim());
+                headquarter.setAddress(headquarterAddress.trim());
+                headquarter.setLevelType(LevelType.HEADQUARTER);
+                headquarter.setIsActive(true);
+                headquarter = levelRepository.save(headquarter);
             } else {
-                // No headquarter provided, try to find existing headquarter
                 Optional<Level> existingHeadquarter = levelRepository.findFirstByLevelType(LevelType.HEADQUARTER);
-
                 if (existingHeadquarter.isPresent()) {
                     headquarter = existingHeadquarter.get();
                 } else {
-                    // No headquarter provided and no existing headquarter found
                     return ResponseEntity.ok("Status 3000"); // Headquarter required
                 }
             }
 
             Level currentParent = headquarter;
 
-            // REGION (optional) - only create if both name and address are provided
             if (regionName != null && !regionName.trim().isEmpty() &&
                     regionAddress != null && !regionAddress.trim().isEmpty()) {
 
-                Optional<Level> existingRegion = levelRepository.findByNameAndLevelTypeAndParent(regionName.trim(),
-                        LevelType.REGION, currentParent);
-                if (existingRegion.isEmpty()) {
-                    Level region = new Level();
-                    region.setName(regionName.trim());
-                    region.setAddress(regionAddress.trim());
-                    region.setLevelType(LevelType.REGION);
-                    region.setIsActive(true);
-                    region.setParent(currentParent);
-                    region = levelRepository.save(region);
-                    currentParent = region;
-                } else {
-                    currentParent = existingRegion.get();
-                }
+                Level region = new Level();
+                region.setName(regionName.trim());
+                region.setAddress(regionAddress.trim());
+                region.setLevelType(LevelType.REGION);
+                region.setIsActive(true);
+                region.setParent(currentParent);
+                region = levelRepository.save(region);
+                currentParent = region;
             }
 
-            // PARISH (optional) - only create if both name and address are provided
             if (parishName != null && !parishName.trim().isEmpty() &&
                     parishAddress != null && !parishAddress.trim().isEmpty()) {
 
-                Optional<Level> existingParish = levelRepository.findByNameAndLevelTypeAndParent(parishName.trim(),
-                        LevelType.PARISH, currentParent);
-                if (existingParish.isEmpty()) {
-                    Level parish = new Level();
-                    parish.setName(parishName.trim());
-                    parish.setAddress(parishAddress.trim());
-                    parish.setLevelType(LevelType.PARISH);
-                    parish.setIsActive(true);
-                    parish.setParent(currentParent);
-                    parish = levelRepository.save(parish);
-                    currentParent = parish;
-                } else {
-                    currentParent = existingParish.get();
-                }
+                Level parish = new Level();
+                parish.setName(parishName.trim());
+                parish.setAddress(parishAddress.trim());
+                parish.setLevelType(LevelType.PARISH);
+                parish.setIsActive(true);
+                parish.setParent(currentParent);
+                parish = levelRepository.save(parish);
+                currentParent = parish;
             }
 
-            // CHAPEL (optional) - only create if both name and address are provided
             if (chapelName != null && !chapelName.trim().isEmpty() &&
                     chapelAddress != null && !chapelAddress.trim().isEmpty()) {
 
-                Optional<Level> existingChapel = levelRepository.findByNameAndLevelTypeAndParent(chapelName.trim(),
-                        LevelType.CHAPEL, currentParent);
-                if (existingChapel.isEmpty()) {
-                    Level chapel = new Level();
-                    chapel.setName(chapelName.trim());
-                    chapel.setAddress(chapelAddress.trim());
-                    chapel.setLevelType(LevelType.CHAPEL);
-                    chapel.setIsActive(true);
-                    chapel.setParent(currentParent);
-                    chapel = levelRepository.save(chapel);
-                    currentParent = chapel;
-                } else {
-                    currentParent = existingChapel.get();
-                }
+                Level chapel = new Level();
+                chapel.setName(chapelName.trim());
+                chapel.setAddress(chapelAddress.trim());
+                chapel.setLevelType(LevelType.CHAPEL);
+                chapel.setIsActive(true);
+                chapel.setParent(currentParent);
+                chapel = levelRepository.save(chapel);
+                currentParent = chapel;
             }
 
-            // CELL (optional) - only create if both name and address are provided
             if (cellName != null && !cellName.trim().isEmpty() &&
                     cellAddress != null && !cellAddress.trim().isEmpty()) {
 
-                Optional<Level> existingCell = levelRepository.findByNameAndLevelTypeAndParent(cellName.trim(),
-                        LevelType.CELL, currentParent);
-                if (existingCell.isEmpty()) {
-                    Level cell = new Level();
-                    cell.setName(cellName.trim());
-                    cell.setAddress(cellAddress.trim());
-                    cell.setLevelType(LevelType.CELL);
-                    cell.setIsActive(true);
-                    cell.setParent(currentParent);
-                    levelRepository.save(cell);
-                }
+                Level cell = new Level();
+                cell.setName(cellName.trim());
+                cell.setAddress(cellAddress.trim());
+                cell.setLevelType(LevelType.CELL);
+                cell.setIsActive(true);
+                cell.setParent(currentParent);
+                levelRepository.save(cell);
             }
 
-            return ResponseEntity.ok("Status 1000"); // Success
+            return ResponseEntity.ok("Status 1000");
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.ok("Status 9999"); // Unknown error
+            return ResponseEntity.ok("Status 9999");
         }
     }
 

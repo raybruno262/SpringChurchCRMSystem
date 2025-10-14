@@ -29,7 +29,7 @@ public class LevelController {
     private LevelService levelService;
 
     // creating all levels
-    @PostMapping("/createAllLevels")
+    @PostMapping("/createAllLevels/{userId}")
     public ResponseEntity<String> createAllLevels(
             @RequestParam(required = false) String headquarterName,
             @RequestParam(required = false) String headquarterAddress,
