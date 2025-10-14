@@ -30,8 +30,6 @@ public interface LevelRepository extends MongoRepository<Level, String> {
     // find by leveltype
     List<Level> findByLevelType(LevelType levelType);
 
- 
-
     // Find first level by level type (for finding existing headquarter)
     Optional<Level> findFirstByLevelType(LevelType levelType);
 
@@ -43,4 +41,5 @@ public interface LevelRepository extends MongoRepository<Level, String> {
 
     // Find by name and parent (alternative duplicate check)
     Optional<Level> findByNameAndParent(String name, Level parent);
+
 }

@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.service.LevelService;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.LevelType;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.LevelRepository;
 
 @RestController
 
@@ -27,6 +29,8 @@ import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 public class LevelController {
     @Autowired
     private LevelService levelService;
+    @Autowired
+    private LevelRepository levelRepository;
 
     // creating all levels
     @PostMapping("/createAllLevels/{userId}")
@@ -51,11 +55,11 @@ public class LevelController {
     }
 
     // addd one level from an existing parent
-    @PostMapping("/addOneLevel")
+    @PostMapping("/addOneLevel/{userId}")
     public ResponseEntity<String> addOneLevel(@RequestParam String levelName, @RequestParam String levelAddress,
-            @RequestParam String parentId) {
+            @RequestParam String parentId, @PathVariable String userId) {
 
-        return levelService.addOneLevel(levelName, levelAddress, parentId);
+        return levelService.addOneLevel(levelName, levelAddress, parentId, userId);
 
     }
 
@@ -115,6 +119,11 @@ public class LevelController {
     @GetMapping("allCells")
     public List<Level> getAllCells() {
         return levelService.getAllCells();
+    }
+
+    @GetMapping("/byType/{type}")
+    public List<Level> getLevelsByType(@PathVariable LevelType type) {
+        return levelRepository.findByLevelType(type);
     }
 
 }

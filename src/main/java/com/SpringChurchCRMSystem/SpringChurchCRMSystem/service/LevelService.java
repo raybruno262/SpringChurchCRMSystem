@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +35,7 @@ public class LevelService {
     @Autowired
     private HttpSession userSession;
 
+    @PostMapping("/createAllLevels/{userId}")
     public ResponseEntity<String> createAllLevels(
             @RequestParam(required = false) String headquarterName,
             @RequestParam(required = false) String headquarterAddress,
@@ -51,13 +53,22 @@ public class LevelService {
             User loggedInUser = userRepository.findByUserId(userId);
             if (loggedInUser == null)
                 return ResponseEntity.ok("Status 4000");
+
             if (loggedInUser.getRole() != RoleType.SuperAdmin)
                 return ResponseEntity.ok("Status 6000");
 
             Level headquarter;
 
-            if (headquarterName != null && !headquarterName.trim().isEmpty() &&
-                    headquarterAddress != null && !headquarterAddress.trim().isEmpty()) {
+            boolean wantsToCreateHeadquarter = headquarterName != null && !headquarterName.trim().isEmpty()
+                    && headquarterAddress != null && !headquarterAddress.trim().isEmpty();
+
+            Optional<Level> existingHeadquarter = levelRepository.findFirstByLevelType(LevelType.HEADQUARTER);
+
+            if (wantsToCreateHeadquarter) {
+                if (existingHeadquarter.isPresent()) {
+
+                    return ResponseEntity.ok("Status 3000");
+                }
 
                 headquarter = new Level();
                 headquarter.setName(headquarterName.trim());
@@ -66,11 +77,10 @@ public class LevelService {
                 headquarter.setIsActive(true);
                 headquarter = levelRepository.save(headquarter);
             } else {
-                Optional<Level> existingHeadquarter = levelRepository.findFirstByLevelType(LevelType.HEADQUARTER);
                 if (existingHeadquarter.isPresent()) {
                     headquarter = existingHeadquarter.get();
                 } else {
-                    return ResponseEntity.ok("Status 3000"); // Headquarter required
+                    return ResponseEntity.ok("Status 3000");
                 }
             }
 
@@ -136,19 +146,14 @@ public class LevelService {
     }
 
     // create a single level from an existing parent
-    public ResponseEntity<String> addOneLevel(String levelName, String levelAddress, String parentId) {
+    public ResponseEntity<String> addOneLevel(String levelName, String levelAddress, String parentId,
+            String userId) {
         try {
-            User loggedInUser = (User) userSession.getAttribute("loggedInUser");
-
-            // No user logged in
-            if (loggedInUser == null) {
+            User loggedInUser = userRepository.findByUserId(userId);
+            if (loggedInUser == null)
                 return ResponseEntity.ok("Status 4000");
-            }
-
-            // Not a SuperAdmin
-            if (loggedInUser.getRole() != RoleType.SuperAdmin) {
+            if (loggedInUser.getRole() != RoleType.SuperAdmin)
                 return ResponseEntity.ok("Status 6000");
-            }
             // Validate input
             if (levelName == null || levelAddress == null) {
                 return ResponseEntity.ok("Status 3000"); // Missing required fields
@@ -190,7 +195,7 @@ public class LevelService {
 
     // Get all levels regardless of status
     public List<Level> getAllLevels() {
-        return levelRepository.findAll();
+        return levelRepository.findAll(Sort.by(Sort.Direction.DESC, "levelId"));
     }
 
     // find all cells
@@ -200,7 +205,7 @@ public class LevelService {
 
     // Getting all paginated levels
     public Page<Level> getPaginatedLevels(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "levelId"));
         return levelRepository.findAll(pageable);
     }
 
