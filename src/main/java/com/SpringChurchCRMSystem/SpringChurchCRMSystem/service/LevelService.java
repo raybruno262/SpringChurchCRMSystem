@@ -23,8 +23,6 @@ import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.User;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.LevelRepository;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.repository.UserRepository;
 
-import jakarta.servlet.http.HttpSession;
-
 @Service
 public class LevelService {
 
@@ -32,8 +30,6 @@ public class LevelService {
     private LevelRepository levelRepository;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private HttpSession userSession;
 
     @PostMapping("/createAllLevels/{userId}")
     public ResponseEntity<String> createAllLevels(
