@@ -32,12 +32,12 @@ public class UserController {
     private final HttpSession userSession;
 
     // create a user ( form-data)
-    @PostMapping("/createrUser")
+    @PostMapping("/createrUser/{userId}")
     public ResponseEntity<String> createUser(
             @RequestPart("user") User user,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestPart(value = "file", required = false) MultipartFile file, @PathVariable String userId) {
 
-        return userService.createUser(user, file);
+        return userService.createUser(user, file, userId);
 
     }
 
@@ -48,13 +48,14 @@ public class UserController {
     }
 
     // update a user
-    @PutMapping("/updateUser/{userId}")
+    @PutMapping("/updateUser/{userId}/{loggedInUser}")
     public ResponseEntity<String> updateUserWithPic(
+            @PathVariable String loggedInUser,
             @PathVariable String userId,
             @RequestPart("user") User updatedData,
             @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        return userService.updateUser(userId, updatedData, file);
+        return userService.updateUser(loggedInUser, userId, updatedData, file);
 
     }
 

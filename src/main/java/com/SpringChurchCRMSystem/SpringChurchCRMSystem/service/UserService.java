@@ -49,8 +49,20 @@ public class UserService {
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     // creating a user
-    public ResponseEntity<String> createUser(User user, MultipartFile file) {
+    public ResponseEntity<String> createUser(User user, MultipartFile file, String userId) {
         try {
+            User loggedInUser = userRepository.findByUserId(userId);
+
+            // No user logged in
+            if (loggedInUser == null) {
+                return ResponseEntity.ok("Status 4000");
+            }
+
+            // Not a CellAdmin or admin
+            if (loggedInUser.getRole() != RoleType.SuperAdmin) {
+                return ResponseEntity.ok("Status 6000");
+            }
+
             if (userRepository.findByEmail(user.getEmail()).isPresent()) {
                 return ResponseEntity.ok("Status 5000"); // Email exists
             }
@@ -83,8 +95,20 @@ public class UserService {
     }
 
     // update a user
-    public ResponseEntity<String> updateUser(String userId, User updatedData, MultipartFile file) {
+    public ResponseEntity<String> updateUser(String loggedInUser, String userId, User updatedData, MultipartFile file) {
         try {
+            User checkLoggedInUser = userRepository.findByUserId(loggedInUser);
+
+            // No user logged in
+            if (checkLoggedInUser == null) {
+                return ResponseEntity.ok("Status 4000");
+            }
+
+            // Not a CellAdmin or admin
+            if (checkLoggedInUser.getRole() != RoleType.SuperAdmin) {
+                return ResponseEntity.ok("Status 6000");
+            }
+
             Optional<User> userOpt = userRepository.findById(userId);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.ok("Status 3000"); // User not found
