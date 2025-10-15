@@ -30,6 +30,8 @@ public interface LevelRepository extends MongoRepository<Level, String> {
     // find by leveltype
     List<Level> findByLevelType(LevelType levelType);
 
+    int countByLevelTypeAndIsActive(String levelType, boolean isActive);
+
     // Find first level by level type (for finding existing headquarter)
     Optional<Level> findFirstByLevelType(LevelType levelType);
 

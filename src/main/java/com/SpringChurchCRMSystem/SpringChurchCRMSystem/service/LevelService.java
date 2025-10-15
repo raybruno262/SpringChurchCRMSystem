@@ -1,7 +1,10 @@
 package com.SpringChurchCRMSystem.SpringChurchCRMSystem.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -228,7 +231,6 @@ public class LevelService {
         return levelRepository.findById(levelId);
     }
 
-    // Update level
     public ResponseEntity<String> updateLevel(String levelId, Level updatedData, String userId) {
         try {
             User loggedInUser = userRepository.findByUserId(userId);
@@ -243,8 +245,13 @@ public class LevelService {
                 return ResponseEntity.ok("Status 3000");
 
             Level level = levelOpt.get();
+            boolean isHeadquarter = level.getLevelType() == LevelType.HEADQUARTER;
 
-            // 1️⃣ Update name/address
+            if (isHeadquarter && Boolean.FALSE.equals(updatedData.getIsActive())) {
+                return ResponseEntity.ok("Status 8000: Headquarter cannot be deactivated.");
+            }
+
+            // Update name/address/type
             if (updatedData.getName() != null && !updatedData.getName().isBlank()) {
                 level.setName(updatedData.getName());
             }
@@ -252,10 +259,53 @@ public class LevelService {
                 level.setAddress(updatedData.getAddress());
             }
             if (updatedData.getLevelType() != null) {
-                return ResponseEntity.ok("Status 3000");
+                level.setLevelType(updatedData.getLevelType());
             }
 
-            // 2️⃣ Reassign parent
+            // Handle status change
+            Boolean requestedStatus = updatedData.getIsActive();
+            if (requestedStatus != null) {
+                if (requestedStatus) {
+                    List<String> blockers = getInactiveAncestorDescriptions(level);
+                    if (!blockers.isEmpty()) {
+                        String blockedDetails = String.join(", ", blockers);
+                        return ResponseEntity.ok("Status 8000: Blocked by inactive ancestor(s): " + blockedDetails);
+                    }
+
+                    level.setIsActive(true);
+
+                    if (!isHeadquarter) {
+                        List<Level> inactiveLevels = levelRepository.findByIsActiveFalse();
+                        List<Level> descendants = new ArrayList<>();
+                        findDescendants(levelId, inactiveLevels, descendants);
+
+                        for (Level descendant : descendants) {
+                            if (descendant.getLevelType() != LevelType.HEADQUARTER) {
+                                descendant.setIsActive(true);
+                            }
+                        }
+                        levelRepository.saveAll(descendants);
+                    }
+
+                } else {
+                    if (!isHeadquarter) {
+                        level.setIsActive(false);
+
+                        List<Level> activeLevels = levelRepository.findByIsActiveTrue();
+                        List<Level> descendants = new ArrayList<>();
+                        findDescendants(levelId, activeLevels, descendants);
+
+                        for (Level descendant : descendants) {
+                            if (descendant.getLevelType() != LevelType.HEADQUARTER) {
+                                descendant.setIsActive(false);
+                            }
+                        }
+                        levelRepository.saveAll(descendants);
+                    }
+                }
+            }
+
+            // Reassign parent
             if (updatedData.getParent() != null && updatedData.getParent().getLevelId() != null) {
                 String newParentId = updatedData.getParent().getLevelId();
                 Optional<Level> newParentOpt = levelRepository.findById(newParentId);
@@ -264,8 +314,10 @@ public class LevelService {
 
                 Level newParent = newParentOpt.get();
 
-                if (!level.getIsActive() || !newParent.getIsActive()) {
-                    return ResponseEntity.ok(CustomGlobalExceptionHandler.BLOCKED_BY_INACTIVE_ANCESTOR);
+                if (!newParent.getIsActive()) {
+                    String type = newParent.getLevelType() != null ? newParent.getLevelType().name() : "Unknown";
+                    String name = newParent.getName() != null ? newParent.getName() : "Unnamed";
+                    return ResponseEntity.ok("Status 8000: Blocked by inactive parent: " + type + " (" + name + ")");
                 }
 
                 Level oldParent = level.getParent();
@@ -276,46 +328,7 @@ public class LevelService {
                 level.setParent(newParent);
             }
 
-            // Enabling Level
-            if (Boolean.TRUE.equals(updatedData.getIsActive())) {
-
-                if (!hasActiveAncestor(level)) {
-                    return ResponseEntity.ok(CustomGlobalExceptionHandler.BLOCKED_BY_INACTIVE_ANCESTOR);
-                }
-
-                level.setIsActive(true);
-                levelRepository.save(level);
-
-                List<Level> inactiveLevels = levelRepository.findByIsActiveFalse();
-                List<Level> descendants = new ArrayList<>();
-                findDescendants(levelId, inactiveLevels, descendants);
-
-                for (Level descendant : descendants) {
-                    descendant.setIsActive(true);
-                }
-                levelRepository.saveAll(descendants);
-
-                // Disable Level
-            } else if (Boolean.FALSE.equals(updatedData.getIsActive())) {
-
-                level.setIsActive(false);
-                levelRepository.save(level);
-
-                List<Level> activeLevels = levelRepository.findByIsActiveTrue();
-                List<Level> descendants = new ArrayList<>();
-                findDescendants(levelId, activeLevels, descendants);
-
-                for (Level descendant : descendants) {
-                    descendant.setIsActive(false);
-                }
-                levelRepository.saveAll(descendants);
-            }
-
-            // Final save if only name/address/parent changed
-            if (levelRepository.findById(levelId).isPresent()) {
-                levelRepository.save(level);
-            }
-
+            levelRepository.save(level);
             return ResponseEntity.ok("Status 1000");
 
         } catch (Exception e) {
@@ -324,33 +337,34 @@ public class LevelService {
         }
     }
 
-    // Check for Active Ancestor before Enabling a level
-    private boolean hasActiveAncestor(Level level) {
-        Level current = level;
+    private List<String> getInactiveAncestorDescriptions(Level level) {
+        List<String> descriptions = new ArrayList<>();
+        Level current = level.getParent();
 
-        while (current.getParent() != null) {
-            Level parent = current.getParent();
-
-            // Defensive check: ensure parent reference is valid
-            Optional<Level> parentOpt = levelRepository.findById(parent.getLevelId());
-            if (parentOpt.isEmpty()) {
-                return false;
-            }
+        while (current != null) {
+            Optional<Level> parentOpt = levelRepository.findById(current.getLevelId());
+            if (parentOpt.isEmpty())
+                break;
 
             Level parentLevel = parentOpt.get();
             if (!parentLevel.getIsActive()) {
-                return false; // Inactive ancestor,block enable
+                String type = parentLevel.getLevelType() != null ? parentLevel.getLevelType().name() : "Unknown";
+                String name = parentLevel.getName() != null ? parentLevel.getName() : "Unnamed";
+                descriptions.add(type + " (" + name + ")");
             }
 
-            current = parentLevel; // Move up the chain
+            current = parentLevel.getParent();
         }
 
-        return true; // Reached top safely
+        return descriptions;
     }
 
-    // get total level counts using level types
-    public int countByType(String type) {
-        return levelRepository.countByLevelType(type);
+    public Map<String, Integer> countByTypeWithStatus(String type) {
+        Map<String, Integer> result = new HashMap<>();
+        result.put("total", levelRepository.countByLevelType(type));
+        result.put("active", levelRepository.countByLevelTypeAndIsActive(type, true));
+        result.put("inactive", levelRepository.countByLevelTypeAndIsActive(type, false));
+        return result;
     }
 
     // get all levels under a level

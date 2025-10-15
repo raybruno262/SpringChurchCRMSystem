@@ -107,13 +107,13 @@ public class LevelController {
 
     // get level counts by level types
     @GetMapping("/levelCounts")
-    public Map<String, Integer> getLevelCounts() {
-        Map<String, Integer> counts = new HashMap<>();
-        counts.put("regions", levelService.countByType("REGION"));
-        counts.put("parishes", levelService.countByType("PARISH"));
-        counts.put("chapels", levelService.countByType("CHAPEL"));
-        counts.put("cells", levelService.countByType("CELL"));
-        return counts;
+    public ResponseEntity<Map<String, Map<String, Integer>>> getLevelCounts() {
+        Map<String, Map<String, Integer>> counts = new HashMap<>();
+        counts.put("regions", levelService.countByTypeWithStatus("REGION"));
+        counts.put("parishes", levelService.countByTypeWithStatus("PARISH"));
+        counts.put("chapels", levelService.countByTypeWithStatus("CHAPEL"));
+        counts.put("cells", levelService.countByTypeWithStatus("CELL"));
+        return ResponseEntity.ok(counts);
     }
 
     // get all cells
