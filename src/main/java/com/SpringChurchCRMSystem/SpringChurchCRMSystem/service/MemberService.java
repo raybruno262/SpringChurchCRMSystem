@@ -141,7 +141,7 @@ public class MemberService {
             }
 
             // Not a CellAdmin
-            if (loggedInUser.getRole() != RoleType.CellAdmin) {
+            if (loggedInUser.getRole() != RoleType.CellAdmin && loggedInUser.getRole() != RoleType.SuperAdmin) {
                 return ResponseEntity.ok("Status 6000");
             }
 
