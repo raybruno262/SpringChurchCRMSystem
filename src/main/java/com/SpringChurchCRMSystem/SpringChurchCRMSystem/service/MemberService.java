@@ -1,6 +1,8 @@
 package com.SpringChurchCRMSystem.SpringChurchCRMSystem.service;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -121,12 +123,12 @@ public class MemberService {
 
     // Find all members
     public List<Member> getAllMembers() {
-        return memberRepository.findAll();
+        return memberRepository.findAll(Sort.by(Sort.Direction.DESC, "memberId"));
     }
 
     // Find all paginated members
     public Page<Member> getPaginatedMembers(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "userId"));
         return memberRepository.findAll(pageable);
 
     }
@@ -272,22 +274,60 @@ public class MemberService {
     }
 
     // Get scoped Birthdays
-    public Page<Member> getScopedMembersWithBirthdaysThisMonth(int page, int size, String userId) {
+public Page<Member> getScopedMembersWithBirthdaysThisMonth(int page, int size, String userId) {
+    User loggedInUser = userRepository.findByUserId(userId);
+    if (loggedInUser == null) {
+        return Page.empty();
+    }
+
+    int currentMonth = LocalDate.now().getMonthValue();
+    PageRequest pageable = PageRequest.of(page, size);
+
+    List<Member> scopedMembers;
+
+    if (loggedInUser.getRole() == RoleType.SuperAdmin) {
+        scopedMembers = memberRepository.findAll();
+    } else {
+        List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
+
+        if (loggedInUser.getLevel().getLevelType() == LevelType.CELL &&
+                !scopedCells.contains(loggedInUser.getLevel())) {
+            scopedCells.add(loggedInUser.getLevel());
+        }
+
+        scopedMembers = memberRepository.findByLevelIn(scopedCells);
+    }
+
+    // Filter by birthday month BEFORE pagination
+    List<Member> birthdayMembers = scopedMembers.stream()
+        .filter(member -> member.getDateOfBirth() != null &&
+                member.getDateOfBirth().getMonthValue() == currentMonth)
+        .sorted(Comparator.comparing(Member::getDateOfBirth)) // Optional: sort by birthday
+        .toList();
+
+    //  Apply manual pagination
+    int start = Math.min(page * size, birthdayMembers.size());
+    int end = Math.min(start + size, birthdayMembers.size());
+    List<Member> paginated = birthdayMembers.subList(start, end);
+
+    return new PageImpl<>(paginated, pageable, birthdayMembers.size());
+}
+
+    // unpaginated birthdays
+    public List<Member> getUnpaginatedScopedMembersWithBirthdaysThisMonth(String userId) {
         User loggedInUser = userRepository.findByUserId(userId);
         if (loggedInUser == null) {
-            return Page.empty();
+            return Collections.emptyList();
         }
 
         int currentMonth = LocalDate.now().getMonthValue();
-        PageRequest pageable = PageRequest.of(page, size);
 
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
-            Page<Member> allMembers = memberRepository.findAll(pageable);
-            List<Member> filtered = allMembers.getContent().stream()
+            List<Member> allMembers = memberRepository.findAll();
+            return allMembers.stream()
                     .filter(member -> member.getDateOfBirth() != null &&
                             member.getDateOfBirth().getMonthValue() == currentMonth)
                     .toList();
-            return new PageImpl<>(filtered, pageable, filtered.size());
         }
 
         List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
@@ -297,13 +337,11 @@ public class MemberService {
             scopedCells.add(loggedInUser.getLevel());
         }
 
-        Page<Member> scopedMembers = memberRepository.findByLevelIn(scopedCells, pageable);
-        List<Member> filtered = scopedMembers.getContent().stream()
+        List<Member> scopedMembers = memberRepository.findByLevelIn(scopedCells);
+        return scopedMembers.stream()
                 .filter(member -> member.getDateOfBirth() != null &&
                         member.getDateOfBirth().getMonthValue() == currentMonth)
                 .toList();
-
-        return new PageImpl<>(filtered, pageable, filtered.size());
     }
 
     // member stats data

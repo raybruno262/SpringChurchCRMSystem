@@ -16,7 +16,7 @@ public class Member {
 
     @JsonFormat(pattern = "MM/dd/yyyy")
     private LocalDate dateOfBirth;
-    
+        
     private String phone;
     private String gender; // Male or Female
     private String maritalStatus; // Single or Married

@@ -76,6 +76,11 @@ public class MemberController {
         return memberService.getScopedPaginatedMembers(page, size, userId);
     }
 
+    @GetMapping("/scopedUnpaginatedBirthdayMembers")
+    public List<Member> getScopedBirthdayMembers(@RequestParam String userId) {
+        return memberService.getUnpaginatedScopedMembersWithBirthdaysThisMonth(userId);
+    }
+
     // scoped birthday
     @GetMapping("/scopedBirthdayMembers")
     public Page<Member> getScopedBirthdayMembers(
