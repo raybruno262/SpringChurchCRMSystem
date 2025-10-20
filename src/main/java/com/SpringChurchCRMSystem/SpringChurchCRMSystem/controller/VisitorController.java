@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.VisitorStatsDTO;
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.FollowUp;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Visitor;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.service.VisitorService;
 
@@ -51,6 +52,14 @@ public class VisitorController {
             @PathVariable String userId,
             @RequestBody Visitor updatedData) {
         return visitorService.updateVisitor(visitorId, updatedData, userId);
+    }
+
+    // add followup
+    @PostMapping("/addFollowUp/{visitorId}")
+    public ResponseEntity<String> addFollowUp(
+            @PathVariable String visitorId,
+            @RequestBody FollowUp followUp) {
+        return visitorService.addFollowUp(visitorId, followUp);
     }
 
     // Paginated visitors

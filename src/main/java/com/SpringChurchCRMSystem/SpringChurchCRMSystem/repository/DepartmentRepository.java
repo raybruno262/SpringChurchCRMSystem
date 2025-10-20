@@ -15,7 +15,7 @@ public interface DepartmentRepository extends MongoRepository<Department, String
     Page<Department> findAll(Pageable pageable);
 
     // find department by name
-    Optional<Department> findByName(String name);
+    Optional<Department> findByNameIgnoreCase(String name);
 
     // check if department exists by id
     boolean existsByDepartmentId(String departmentId);

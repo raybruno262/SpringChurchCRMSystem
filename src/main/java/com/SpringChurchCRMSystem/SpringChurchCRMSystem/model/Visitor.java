@@ -1,6 +1,8 @@
 package com.SpringChurchCRMSystem.SpringChurchCRMSystem.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -20,7 +22,8 @@ public class Visitor {
     @JsonFormat(pattern = "MM/dd/yyyy")
     private LocalDate visitDate;
     private String status; // new , follow-up, converted, dropped
-    private FollowUp followUp;
+    private List<FollowUp> followUps = new ArrayList<>();
+
     @DBRef
     private Level level;
 
@@ -32,7 +35,7 @@ public class Visitor {
     }
 
     public Visitor(String visitorId, String names, String phone, String gender, String email, String address,
-            LocalDate visitDate, String status, FollowUp followUp, Level level) {
+            LocalDate visitDate, String status, List<FollowUp> followUps, Level level) {
         this.visitorId = visitorId;
         this.names = names;
         this.phone = phone;
@@ -41,7 +44,7 @@ public class Visitor {
         this.address = address;
         this.visitDate = visitDate;
         this.status = status;
-        this.followUp = followUp;
+        this.followUps = followUps;
         this.level = level;
     }
 
@@ -109,12 +112,12 @@ public class Visitor {
         this.status = status;
     }
 
-    public FollowUp getFollowUp() {
-        return followUp;
+    public List<FollowUp> getFollowUps() {
+        return followUps;
     }
 
-    public void setFollowUp(FollowUp followUp) {
-        this.followUp = followUp;
+    public void setFollowUps(List<FollowUp> followUps) {
+        this.followUps = followUps;
     }
 
     public Level getLevel() {

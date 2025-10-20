@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -19,9 +20,11 @@ public class DepartmentService {
 
     // create new department
     public ResponseEntity<String> createDepartment(Department department) {
-        if (departmentRepository.findByName(department.getName()).isPresent()) {
+        if (departmentRepository.findByNameIgnoreCase(department.getName()).isPresent()) {
             return ResponseEntity.ok("Status 5000"); // department exists
         } else {
+            department.setName(department.getName().trim());
+
             departmentRepository.save(department);
             return ResponseEntity.ok("Status 1000"); // Success
         }
@@ -41,20 +44,9 @@ public class DepartmentService {
 
     }
 
-    // delete department
-    public ResponseEntity<String> deleteDepartment(String departmentId) {
-        Optional<Department> optdep = departmentRepository.findById(departmentId);
-        if (optdep.isEmpty()) {
-            return ResponseEntity.ok("Status 3000");
-        }
-        departmentRepository.deleteById(departmentId);
-        return ResponseEntity.ok("Status 1000");
-
-    }
-
     // get all departments
     public List<Department> getAllDepartments() {
-        return departmentRepository.findAll();
+        return departmentRepository.findAll(Sort.by(Sort.Direction.DESC, "departmentId"));
 
     }
 
@@ -65,7 +57,7 @@ public class DepartmentService {
 
     // get all paginated departments
     public Page<Department> getPaginatedDepartments(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "departmentId"));
         return departmentRepository.findAll(pageable);
 
     }

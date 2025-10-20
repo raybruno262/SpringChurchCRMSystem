@@ -83,12 +83,10 @@ public class VisitorService {
         try {
             User loggedInUser = userRepository.findByUserId(userId);
 
-            // No user logged in
             if (loggedInUser == null) {
                 return ResponseEntity.ok("Status 4000");
             }
 
-            // Not a CellAdmin or SuperAdmin
             if (loggedInUser.getRole() != RoleType.CellAdmin && loggedInUser.getRole() != RoleType.SuperAdmin) {
                 return ResponseEntity.ok("Status 6000");
             }
@@ -100,7 +98,6 @@ public class VisitorService {
 
             Visitor visitor = visitorOpt.get();
 
-            // Update fields if provided
             if (updatedData.getNames() != null)
                 visitor.setNames(updatedData.getNames());
             if (updatedData.getPhone() != null)
@@ -116,15 +113,11 @@ public class VisitorService {
             if (updatedData.getStatus() != null)
                 visitor.setStatus(updatedData.getStatus());
 
-            // Validate and update level
             if (updatedData.getLevel() != null &&
                     updatedData.getLevel().getLevelId() != null &&
                     levelRepository.existsById(updatedData.getLevel().getLevelId())) {
                 visitor.setLevel(updatedData.getLevel());
             }
-
-            // Merge follow-up info
-            mergeFollowUpInfo(visitor, updatedData.getFollowUp());
 
             visitorRepository.save(visitor);
             return ResponseEntity.ok("Status 1000"); // Success
@@ -133,29 +126,6 @@ public class VisitorService {
             e.printStackTrace();
             return ResponseEntity.ok("Status 2000"); // Internal server error
         }
-    }
-
-    private void mergeFollowUpInfo(Visitor visitor, FollowUp incoming) {
-        if (incoming == null)
-            return;
-
-        FollowUp existing = visitor.getFollowUp();
-        if (existing == null) {
-            existing = new FollowUp();
-        }
-
-        if (incoming.getFollowUpDate() != null)
-            existing.setFollowUpDate(incoming.getFollowUpDate());
-        if (incoming.getMethod() != null)
-            existing.setMethod(incoming.getMethod());
-        if (incoming.getOutcome() != null)
-            existing.setOutcome(incoming.getOutcome());
-        if (incoming.getNotes() != null)
-            existing.setNotes(incoming.getNotes());
-        if (incoming.getFollowedUpBy() != null)
-            existing.setFollowedUpBy(incoming.getFollowedUpBy());
-
-        visitor.setFollowUp(existing);
     }
 
     // get scoped paginated visitors
@@ -181,6 +151,25 @@ public class VisitorService {
         return visitorRepository.findByLevelIn(scopedCells, pageable);
     }
 
+    public ResponseEntity<String> addFollowUp(String visitorId, FollowUp followUp) {
+        Optional<Visitor> optionalVisitor = visitorRepository.findById(visitorId);
+        if (optionalVisitor.isEmpty()) {
+            return ResponseEntity.ok("Status 3000"); // Visitor not found
+        }
+
+        Visitor visitor = optionalVisitor.get();
+
+        // Add the new follow-up
+        visitor.getFollowUps().add(followUp);
+
+        if (visitor.getStatus() == null || !visitor.getStatus().equalsIgnoreCase("Follow-up")) {
+            visitor.setStatus("Follow-up");
+        }
+
+        visitorRepository.save(visitor);
+        return ResponseEntity.ok("Status 1000"); // Success
+    }
+
     // get visitor by id
 
     public Visitor getVisitorById(String visitorId) {
@@ -203,19 +192,21 @@ public class VisitorService {
     public VisitorStatsDTO getScopedVisitorStats(String userId) {
         User loggedInUser = userRepository.findByUserId(userId);
         if (loggedInUser == null) {
-            return new VisitorStatsDTO(0, 0, 0, 0);
+            return new VisitorStatsDTO(0, 0, 0, 0,0);
         }
 
         long total;
         long newVisitors;
         long followedUp;
         long converted;
+        long dropped;
 
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
             total = visitorRepository.count();
             newVisitors = visitorRepository.countByStatus("New");
             followedUp = visitorRepository.countByStatus("Follow-up");
             converted = visitorRepository.countByStatus("Converted");
+            dropped = visitorRepository.countByStatus("Dropped");
         } else {
             List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
 
@@ -228,9 +219,10 @@ public class VisitorService {
             newVisitors = visitorRepository.countByStatusAndLevelIn("New", scopedCells);
             followedUp = visitorRepository.countByStatusAndLevelIn("Follow-up", scopedCells);
             converted = visitorRepository.countByStatusAndLevelIn("Converted", scopedCells);
+            dropped = visitorRepository.countByStatusAndLevelIn("Dropped", scopedCells);
         }
 
-        return new VisitorStatsDTO(total, newVisitors, followedUp, converted);
+        return new VisitorStatsDTO(total, newVisitors, followedUp, converted, dropped);
     }
 
 }

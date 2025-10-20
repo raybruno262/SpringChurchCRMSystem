@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,14 +38,6 @@ public class DepartmentController {
             @RequestBody Department newDepartment) {
 
         return departmentService.updateDapartment(departmentId, newDepartment);
-
-    }
-
-    // delete department
-    @DeleteMapping("/deleteDepartment/{departmentId}")
-    public ResponseEntity<String> deleteDepartment(@PathVariable String departmentId) {
-
-        return departmentService.deleteDepartment(departmentId);
 
     }
 
