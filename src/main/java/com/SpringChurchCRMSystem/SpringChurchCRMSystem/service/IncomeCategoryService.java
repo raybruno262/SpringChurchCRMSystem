@@ -37,12 +37,16 @@ public class IncomeCategoryService {
         if (optdep.isEmpty()) {
             return ResponseEntity.ok("Status 3000");
         }
-        IncomeCategory d = optdep.get();
-        d.setIncomeCategoryId(incomeCategoryId);
-        d.setName(newIncomeCategoryId.getName());
-        incomeCategoryRepository.save(d);
-        return ResponseEntity.ok("Status 1000"); // Success
+        if (incomeCategoryRepository.findByNameIgnoreCase(newIncomeCategoryId.getName()).isPresent()) {
+            return ResponseEntity.ok("Status 5000"); // income category exists
+        } else {
+            IncomeCategory d = optdep.get();
+            d.setIncomeCategoryId(incomeCategoryId);
+            d.setName(newIncomeCategoryId.getName());
+            incomeCategoryRepository.save(d);
+            return ResponseEntity.ok("Status 1000"); // Success
 
+        }
     }
 
     // get all income categories

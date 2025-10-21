@@ -38,12 +38,15 @@ public class ExpenseCategoryService {
         if (optdep.isEmpty()) {
             return ResponseEntity.ok("Status 3000");
         }
+             if (expenseCategoryRepository.findByNameIgnoreCase(newExpenseCategoryId.getName()).isPresent()) {
+            return ResponseEntity.ok("Status 5000"); // expense category exists
+        } else {
         ExpenseCategory d = optdep.get();
         d.setExpenseCategoryId(expenseCategoryId);
         d.setName(newExpenseCategoryId.getName());
         expenseCategoryRepository.save(d);
         return ResponseEntity.ok("Status 1000"); // Success
-
+        }
     }
 
     // get all expense categories

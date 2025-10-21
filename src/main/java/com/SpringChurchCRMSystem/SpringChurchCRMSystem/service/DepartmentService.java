@@ -36,13 +36,16 @@ public class DepartmentService {
         if (optdep.isEmpty()) {
             return ResponseEntity.ok("Status 3000");
         }
+           if (departmentRepository.findByNameIgnoreCase(newDepartment.getName()).isPresent()) {
+            return ResponseEntity.ok("Status 5000"); // department exists
+        } else {
         Department dep = optdep.get();
         dep.setDepartmentId(departmentId);
         dep.setName(newDepartment.getName());
         departmentRepository.save(dep);
         return ResponseEntity.ok("Status 1000"); // Success
 
-    }
+    }}
 
     // get all departments
     public List<Department> getAllDepartments() {
