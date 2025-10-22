@@ -19,6 +19,9 @@ public class Equipment {
     private String location; // where it is going to be used
     private String description;
 
+    @DBRef
+    private Level level;
+
     public Equipment() {
     }
 
@@ -27,7 +30,7 @@ public class Equipment {
     }
 
     public Equipment(String equipmentId, String name, EquipmentCategory equipmentCategory, LocalDate purchaseDate,
-            double purchasePrice, String condition, String location, String description) {
+            double purchasePrice, String condition, String location, String description, Level level) {
         this.equipmentId = equipmentId;
         this.name = name;
         this.equipmentCategory = equipmentCategory;
@@ -36,6 +39,7 @@ public class Equipment {
         this.condition = condition;
         this.location = location;
         this.description = description;
+        this.level = level;
     }
 
     public String getEquipmentId() {
@@ -100,6 +104,14 @@ public class Equipment {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Level getLevel() {
+        return level;
+    }
+
+    public void setLevel(Level level) {
+        this.level = level;
     }
 
 }

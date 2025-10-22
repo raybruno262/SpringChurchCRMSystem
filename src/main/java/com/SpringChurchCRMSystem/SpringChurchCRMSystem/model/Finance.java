@@ -18,6 +18,9 @@ public class Finance {
     private String transactionType;
     private String description;
 
+    @DBRef
+    private Level level;
+
     public Finance() {
     }
 
@@ -26,13 +29,14 @@ public class Finance {
     }
 
     public Finance(String financeId, Object category, LocalDate transactionDate, double amount, String transactionType,
-            String description) {
+            String description, Level level) {
         this.financeId = financeId;
         this.category = category;
         this.transactionDate = transactionDate;
         this.amount = amount;
         this.transactionType = transactionType;
         this.description = description;
+        this.level = level;
     }
 
     public String getFinanceId() {
@@ -81,6 +85,14 @@ public class Finance {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Level getLevel() {
+        return level;
+    }
+
+    public void setLevel(Level level) {
+        this.level = level;
     }
 
 }

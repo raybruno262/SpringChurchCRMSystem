@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.Dto.EquipmentStatsDTO;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Equipment;
-
+import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.EquipmentCategory;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.Level;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.LevelType;
 import com.SpringChurchCRMSystem.SpringChurchCRMSystem.model.RoleType;
@@ -62,6 +62,11 @@ public class EquipmentService {
                     !equipmentCategoryRepository
                             .existsById(equipment.getEquipmentCategory().getEquipmentCategoryId())) {
                 return ResponseEntity.ok("Status 3000"); // Invalid equipment category
+            }
+
+            // Validate level (equipment must be associated with a level)
+            if (equipment.getLevel() == null || equipment.getLevel().getLevelId() == null) {
+                return ResponseEntity.ok("Status 3000"); // Level is required
             }
 
             // Validate purchase date (cannot be in the future)
@@ -153,6 +158,11 @@ public class EquipmentService {
                 }
             }
 
+            // Update level if provided
+            if (updatedData.getLevel() != null) {
+                equipment.setLevel(updatedData.getLevel());
+            }
+
             if (updatedData.getPurchaseDate() != null) {
                 // Validate purchase date
                 if (updatedData.getPurchaseDate().isAfter(LocalDate.now())) {
@@ -216,7 +226,7 @@ public class EquipmentService {
         return equipmentRepository.findByLevelIn(scopedLevels, pageable);
     }
 
-    // Equipment statistics
+    // Equipment statistics with proper level-based counting
     public EquipmentStatsDTO getScopedEquipmentStats(String userId) {
         User loggedInUser = userRepository.findByUserId(userId);
         if (loggedInUser == null) {
@@ -236,18 +246,20 @@ public class EquipmentService {
             needsRepairCount = equipmentRepository.countByCondition("Needs Repair");
             outOfServiceCount = equipmentRepository.countByCondition("Out of Service");
         } else {
-            List<Level> scopedLevels = levelService.getAllCellsUnder(loggedInUser.getLevel());
+            // Use scoped CELL levels (DBRef Level objects)
+            List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
 
             if (loggedInUser.getLevel().getLevelType() == LevelType.CELL &&
-                    !scopedLevels.contains(loggedInUser.getLevel())) {
-                scopedLevels.add(loggedInUser.getLevel());
+                    !scopedCells.contains(loggedInUser.getLevel())) {
+                scopedCells.add(loggedInUser.getLevel());
             }
 
-            totalEquipment = equipmentRepository.countByLevelIn(scopedLevels);
-            excellentCount = equipmentRepository.countByConditionAndLevelIn("Excellent", scopedLevels);
-            goodCount = equipmentRepository.countByConditionAndLevelIn("Good", scopedLevels);
-            needsRepairCount = equipmentRepository.countByConditionAndLevelIn("Needs Repair", scopedLevels);
-            outOfServiceCount = equipmentRepository.countByConditionAndLevelIn("Out of Service", scopedLevels);
+            //  Count using DBRef Level objects
+            totalEquipment = equipmentRepository.countByLevelIn(scopedCells);
+            excellentCount = equipmentRepository.countByConditionAndLevelIn("Excellent", scopedCells);
+            goodCount = equipmentRepository.countByConditionAndLevelIn("Good", scopedCells);
+            needsRepairCount = equipmentRepository.countByConditionAndLevelIn("Needs Repair", scopedCells);
+            outOfServiceCount = equipmentRepository.countByConditionAndLevelIn("Out of Service", scopedCells);
         }
 
         return new EquipmentStatsDTO(totalEquipment, excellentCount, goodCount, needsRepairCount, outOfServiceCount);

@@ -14,5 +14,4 @@ public interface FinanceRepository extends MongoRepository<Finance, String> {
 
     Page<Finance> findByLevelIn(List<Level> levels, Pageable pageable);
 
-    Double sumAmountByTransactionType(String transactionType);
 }

@@ -239,30 +239,38 @@ public class FinanceService {
         return financeRepository.findByLevelIn(scopedLevels, pageable);
     }
 
-    // Finance stats
+    // In FinanceService - temporary manual calculation
     public FinanceStatsDTO getScopedFinanceStats(String userId) {
         User loggedInUser = userRepository.findByUserId(userId);
         if (loggedInUser == null) {
             return new FinanceStatsDTO(0, 0, 0);
         }
 
-        double totalIncome;
-        double totalExpenses;
-        double currentBalance;
+        List<Finance> financeRecords;
 
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
-            totalIncome = financeRepository.sumAmountByTransactionType("INCOME");
-            totalExpenses = financeRepository.sumAmountByTransactionType("EXPENSE");
+            financeRecords = financeRepository.findAll();
         } else {
-            // For scoped users, you might need to implement level-based filtering
-            totalIncome = financeRepository.sumAmountByTransactionType("INCOME");
-            totalExpenses = financeRepository.sumAmountByTransactionType("EXPENSE");
+            List<Level> scopedCells = levelService.getAllCellsUnder(loggedInUser.getLevel());
+            if (loggedInUser.getLevel().getLevelType() == LevelType.CELL &&
+                    !scopedCells.contains(loggedInUser.getLevel())) {
+                scopedCells.add(loggedInUser.getLevel());
+            }
+            financeRecords = financeRepository.findByLevelIn(scopedCells);
         }
 
-        // Handle null values from repository
-        totalIncome = totalIncome > 0 ? totalIncome : 0;
-        totalExpenses = totalExpenses > 0 ? totalExpenses : 0;
-        currentBalance = totalIncome - totalExpenses;
+        // Calculate sums manually from the list
+        double totalIncome = financeRecords.stream()
+                .filter(f -> f != null && "INCOME".equals(f.getTransactionType()))
+                .mapToDouble(Finance::getAmount)
+                .sum();
+
+        double totalExpenses = financeRecords.stream()
+                .filter(f -> f != null && "EXPENSE".equals(f.getTransactionType()))
+                .mapToDouble(Finance::getAmount)
+                .sum();
+
+        double currentBalance = totalIncome - totalExpenses;
 
         return new FinanceStatsDTO(totalIncome, totalExpenses, currentBalance);
     }
