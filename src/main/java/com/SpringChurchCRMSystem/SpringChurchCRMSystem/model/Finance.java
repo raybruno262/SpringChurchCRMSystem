@@ -11,7 +11,9 @@ public class Finance {
     @Id
     private String financeId;
     @DBRef
-    private Object category;
+    private IncomeCategory incomeCategory;
+    @DBRef
+    private ExpenseCategory expenseCategory;
 
     private LocalDate transactionDate;
     private double amount;
@@ -28,10 +30,11 @@ public class Finance {
         this.financeId = financeId;
     }
 
-    public Finance(String financeId, Object category, LocalDate transactionDate, double amount, String transactionType,
-            String description, Level level) {
+    public Finance(String financeId, IncomeCategory incomeCategory, ExpenseCategory expenseCategory,
+            LocalDate transactionDate, double amount, String transactionType, String description, Level level) {
         this.financeId = financeId;
-        this.category = category;
+        this.incomeCategory = incomeCategory;
+        this.expenseCategory = expenseCategory;
         this.transactionDate = transactionDate;
         this.amount = amount;
         this.transactionType = transactionType;
@@ -47,12 +50,20 @@ public class Finance {
         this.financeId = financeId;
     }
 
-    public Object getCategory() {
-        return category;
+    public IncomeCategory getIncomeCategory() {
+        return incomeCategory;
     }
 
-    public void setCategory(Object category) {
-        this.category = category;
+    public void setIncomeCategory(IncomeCategory incomeCategory) {
+        this.incomeCategory = incomeCategory;
+    }
+
+    public ExpenseCategory getExpenseCategory() {
+        return expenseCategory;
+    }
+
+    public void setExpenseCategory(ExpenseCategory expenseCategory) {
+        this.expenseCategory = expenseCategory;
     }
 
     public LocalDate getTransactionDate() {

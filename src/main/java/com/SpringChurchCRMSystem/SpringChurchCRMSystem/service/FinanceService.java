@@ -53,35 +53,40 @@ public class FinanceService {
                 return ResponseEntity.ok("Status 4000");
             }
 
+            // Not authorized
             if (loggedInUser.getRole() != RoleType.CellAdmin && loggedInUser.getRole() != RoleType.SuperAdmin) {
                 return ResponseEntity.ok("Status 6000");
             }
 
-            // Validate category
-            if (finance.getCategory() == null) {
-                return ResponseEntity.ok("Status 3000"); // Category is required
+            // Validate transaction type
+            if (finance.getTransactionType() == null ||
+                    (!finance.getTransactionType().equals("INCOME")
+                            && !finance.getTransactionType().equals("EXPENSE"))) {
+                return ResponseEntity.ok("Status 3000"); // Invalid transaction type
             }
 
-            // Automatically set transaction type based on category type
-            if (finance.getCategory() instanceof IncomeCategory) {
-                finance.setTransactionType("INCOME");
-            } else if (finance.getCategory() instanceof ExpenseCategory) {
-                finance.setTransactionType("EXPENSE");
-            } else {
-                return ResponseEntity.ok("Status 3000"); // Invalid category type
-            }
-
-            // Validate category existence based on the determined transaction type
+            // Validate category based on transaction type
             if (finance.getTransactionType().equals("INCOME")) {
-                IncomeCategory incomeCategory = (IncomeCategory) finance.getCategory();
-                if (!incomeCategoryRepository.existsById(incomeCategory.getIncomeCategoryId())) {
+                // Must have income category, not expense category
+                if (finance.getIncomeCategory() == null || finance.getIncomeCategory().getIncomeCategoryId() == null) {
+                    return ResponseEntity.ok("Status 3000"); // Income category required
+                }
+                if (!incomeCategoryRepository.existsById(finance.getIncomeCategory().getIncomeCategoryId())) {
                     return ResponseEntity.ok("Status 3000"); // Income category not found
                 }
+                // Ensure expense category is null for income transactions
+                finance.setExpenseCategory(null);
             } else if (finance.getTransactionType().equals("EXPENSE")) {
-                ExpenseCategory expenseCategory = (ExpenseCategory) finance.getCategory();
-                if (!expenseCategoryRepository.existsById(expenseCategory.getExpenseCategoryId())) {
+                // Must have expense category, not income category
+                if (finance.getExpenseCategory() == null
+                        || finance.getExpenseCategory().getExpenseCategoryId() == null) {
+                    return ResponseEntity.ok("Status 3000"); // Expense category required
+                }
+                if (!expenseCategoryRepository.existsById(finance.getExpenseCategory().getExpenseCategoryId())) {
                     return ResponseEntity.ok("Status 3000"); // Expense category not found
                 }
+                // Ensure income category is null for expense transactions
+                finance.setIncomeCategory(null);
             }
 
             // Validate amount
@@ -89,14 +94,21 @@ public class FinanceService {
                 return ResponseEntity.ok("Status 3000"); // Invalid amount
             }
 
-            // Validate transaction date (cannot be in the future)
-            if (finance.getTransactionDate() == null || finance.getTransactionDate().isAfter(LocalDate.now())) {
-                return ResponseEntity.ok("Status 3000"); // Invalid transaction date
+            // Validate transaction date
+            if (finance.getTransactionDate() == null) {
+                finance.setTransactionDate(LocalDate.now()); // Set current date if not provided
+            } else if (finance.getTransactionDate().isAfter(LocalDate.now())) {
+                return ResponseEntity.ok("Status 3000"); // Cannot have future transaction date
             }
 
-            // Set creation date if not provided
-            if (finance.getTransactionDate() == null) {
-                finance.setTransactionDate(LocalDate.now());
+            // Validate level
+            if (finance.getLevel() == null || finance.getLevel().getLevelId() == null) {
+                return ResponseEntity.ok("Status 3000"); // Level is required
+            }
+
+            // Validate description
+            if (finance.getDescription() == null || finance.getDescription().trim().isEmpty()) {
+                return ResponseEntity.ok("Status 3000"); // Description is required
             }
 
             financeRepository.save(finance);
@@ -145,7 +157,7 @@ public class FinanceService {
 
             Finance finance = financeOpt.get();
 
-            // Update fields if provided
+
             if (updatedData.getTransactionDate() != null) {
                 // Validate transaction date
                 if (updatedData.getTransactionDate().isAfter(LocalDate.now())) {
@@ -162,7 +174,12 @@ public class FinanceService {
                 finance.setDescription(updatedData.getDescription());
             }
 
-            // Update transaction type and category if provided
+            // Update level if provided
+            if (updatedData.getLevel() != null) {
+                finance.setLevel(updatedData.getLevel());
+            }
+
+            // Update transaction type if provided
             if (updatedData.getTransactionType() != null) {
                 String newTransactionType = updatedData.getTransactionType();
                 if (!newTransactionType.equals("INCOME") && !newTransactionType.equals("EXPENSE")) {
@@ -170,40 +187,48 @@ public class FinanceService {
                 }
                 finance.setTransactionType(newTransactionType);
 
-                // If category is also being updated, validate it
-                if (updatedData.getCategory() != null) {
-                    if (newTransactionType.equals("INCOME") && !(updatedData.getCategory() instanceof IncomeCategory)) {
-                        return ResponseEntity.ok("Status 3000"); // Category type mismatch
-                    }
-                    if (newTransactionType.equals("EXPENSE")
-                            && !(updatedData.getCategory() instanceof ExpenseCategory)) {
-                        return ResponseEntity.ok("Status 3000"); // Category type mismatch
-                    }
-                    finance.setCategory(updatedData.getCategory());
+                // Clear opposite category when transaction type changes
+                if (newTransactionType.equals("INCOME")) {
+                    finance.setExpenseCategory(null);
+                } else if (newTransactionType.equals("EXPENSE")) {
+                    finance.setIncomeCategory(null);
                 }
-            } else if (updatedData.getCategory() != null) {
-                // Only category is being updated, validate against current transaction type
-                if (finance.getTransactionType().equals("INCOME")
-                        && !(updatedData.getCategory() instanceof IncomeCategory)) {
-                    return ResponseEntity.ok("Status 3000"); // Category type mismatch
-                }
-                if (finance.getTransactionType().equals("EXPENSE")
-                        && !(updatedData.getCategory() instanceof ExpenseCategory)) {
-                    return ResponseEntity.ok("Status 3000"); // Category type mismatch
-                }
-                finance.setCategory(updatedData.getCategory());
             }
 
-            // Validate category existence
-            if (finance.getCategory() instanceof IncomeCategory) {
-                IncomeCategory incomeCategory = (IncomeCategory) finance.getCategory();
-                if (!incomeCategoryRepository.existsById(incomeCategory.getIncomeCategoryId())) {
-                    return ResponseEntity.ok("Status 3000"); // Income category not found
+            // Update income category if provided and transaction type is INCOME
+            if (updatedData.getIncomeCategory() != null) {
+                if (finance.getTransactionType().equals("INCOME")) {
+                    // Validate income category
+                    if (updatedData.getIncomeCategory().getIncomeCategoryId() == null) {
+                        return ResponseEntity.ok("Status 3000"); // Income category ID required
+                    }
+                    if (!incomeCategoryRepository.existsById(updatedData.getIncomeCategory().getIncomeCategoryId())) {
+                        return ResponseEntity.ok("Status 3000"); // Income category not found
+                    }
+                    finance.setIncomeCategory(updatedData.getIncomeCategory());
+                    // Ensure expense category is null
+                    finance.setExpenseCategory(null);
+                } else {
+                    return ResponseEntity.ok("Status 3000"); // Cannot set income category for expense transaction
                 }
-            } else if (finance.getCategory() instanceof ExpenseCategory) {
-                ExpenseCategory expenseCategory = (ExpenseCategory) finance.getCategory();
-                if (!expenseCategoryRepository.existsById(expenseCategory.getExpenseCategoryId())) {
-                    return ResponseEntity.ok("Status 3000"); // Expense category not found
+            }
+
+            // Update expense category if provided and transaction type is EXPENSE
+            if (updatedData.getExpenseCategory() != null) {
+                if (finance.getTransactionType().equals("EXPENSE")) {
+                    // Validate expense category
+                    if (updatedData.getExpenseCategory().getExpenseCategoryId() == null) {
+                        return ResponseEntity.ok("Status 3000"); // Expense category ID required
+                    }
+                    if (!expenseCategoryRepository
+                            .existsById(updatedData.getExpenseCategory().getExpenseCategoryId())) {
+                        return ResponseEntity.ok("Status 3000"); // Expense category not found
+                    }
+                    finance.setExpenseCategory(updatedData.getExpenseCategory());
+                    // Ensure income category is null
+                    finance.setIncomeCategory(null);
+                } else {
+                    return ResponseEntity.ok("Status 3000"); // Cannot set expense category for income transaction
                 }
             }
 
