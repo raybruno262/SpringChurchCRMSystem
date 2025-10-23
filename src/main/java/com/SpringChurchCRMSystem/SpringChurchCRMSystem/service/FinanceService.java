@@ -126,12 +126,12 @@ public class FinanceService {
 
     // Find all finance records
     public List<Finance> getAllFinanceRecords() {
-        return financeRepository.findAll(Sort.by(Sort.Direction.DESC, "transactionDate"));
+        return financeRepository.findAll(Sort.by(Sort.Direction.DESC, "financeId"));
     }
 
     // Find all paginated finance records
     public Page<Finance> getPaginatedFinanceRecords(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "transactionDate"));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "financeId"));
         return financeRepository.findAll(pageable);
     }
 
@@ -156,7 +156,6 @@ public class FinanceService {
             }
 
             Finance finance = financeOpt.get();
-
 
             if (updatedData.getTransactionDate() != null) {
                 // Validate transaction date
@@ -248,7 +247,7 @@ public class FinanceService {
             return Page.empty();
         }
 
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "transactionDate"));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "financeId"));
 
         if (loggedInUser.getRole() == RoleType.SuperAdmin) {
             return financeRepository.findAll(pageable);
